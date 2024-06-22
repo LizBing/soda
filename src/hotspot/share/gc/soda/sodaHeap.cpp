@@ -66,6 +66,7 @@ jint SodaHeap::initialize() {
 
   // Initialize facilities
   SodaFreeLineTable::initialize((intptr_t)_reserved.start());
+  SodaHeapBlocks::initialize();
   SodaGlobalAllocator::initialize((intptr_t)_reserved.start());
 
   // All done, print out the configuration

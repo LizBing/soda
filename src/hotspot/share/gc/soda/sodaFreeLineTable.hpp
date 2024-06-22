@@ -38,6 +38,7 @@ public:
   static void initialize(intptr_t heap_start) {
     _heap_start = heap_start;
     _cards = NEW_C_HEAP_ARRAY(CardValue, size(), mtGC);
+    memset(_cards, clean_card_value(), size());
   }
 
 public:
@@ -106,6 +107,7 @@ public:
   bool discover(Closure*);
 
   void clear_cards() {
+    auto s = _end - _begin;
     memset(_begin, SodaFreeLineTable::clean_card_value(), _end - _begin);
   }
 

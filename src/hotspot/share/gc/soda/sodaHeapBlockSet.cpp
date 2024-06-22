@@ -25,6 +25,8 @@
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlockSet.hpp"
 
+SodaHeapBlock* SodaHeapBlocks::_blocks;
+
 SodaHeapBlockLFStack SodaBlockArchive::_young;
 SodaHeapBlockLFStack SodaBlockArchive::_old;
 SodaHeapBlockLFStack SodaBlockArchive::_humongous;

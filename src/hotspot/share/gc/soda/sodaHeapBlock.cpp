@@ -41,7 +41,8 @@ private:
 SodaHeapBlock::SodaHeapBlock() {
   auto heap = SodaHeap::heap();
 
-  _idx = (ptrdiff_t)(this - SodaHeapBlocks::_blocks) / sizeof(SodaHeapBlock);
+  _idx = (ptrdiff_t)((intptr_t)this - (intptr_t)SodaHeapBlocks::_blocks) /
+         sizeof(SodaHeapBlock);
   _start = intptr_t(heap->reserved_region().start()) +
            heap->block_size() * _idx;
 

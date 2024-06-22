@@ -32,10 +32,11 @@
 
 class SodaHeapBlockStack;
 
-class SodaHeapBlock : public CHeapObj<mtGC> {
+class SodaHeapBlock {
   friend class SodaHeapBlocks;
   friend class SodaGlobalAllocator;
 
+private:
   SodaHeapBlock();
 
 public:

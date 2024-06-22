@@ -27,6 +27,7 @@
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
 #include "memory/allStatic.hpp"
+#include "memory/allocation.hpp"
 #include "utilities/lockFreeStack.hpp"
 
 class SodaHeapBlocks : AllStatic {
@@ -34,7 +35,8 @@ class SodaHeapBlocks : AllStatic {
 
 public:
   static void initialize() {
-    _blocks = new SodaHeapBlock[size()];
+    _blocks = NEW_C_HEAP_ARRAY(SodaHeapBlock, size(), mtGC);
+    new(_blocks) SodaHeapBlock[size()];
   }
 
 public:
