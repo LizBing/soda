@@ -41,7 +41,6 @@ public:
   }
 
 public:
-  // forward
   static CardValue clean_card_value() { return 0; }
   static CardValue dirty_card_value() { return 1; }
 
@@ -59,13 +58,32 @@ public:
 private:
   static size_t size() { return SodaHeap::heap()->capacity_in_lines(); }
 
+public:
+  // no need to provide a parallel version
+  static void mark(oop p) {
+    auto start = card_for((intptr_t)p.obj());
+    auto cards = cards_to_mark(p);
+
+    for (int i = 0; i < cards; ++i)
+      start[i] = dirty_card_value();
+  }
+
+private:
+  static int cards_to_mark(oop p) {
+    auto ls = SodaHeap::heap()->line_size();
+    auto addr = (intptr_t)p.obj();
+    auto len = (p->size() - 1) * HeapWordSize;
+
+    return (align_down(addr + len, ls) - align_down(addr, ls)) / ls + 1;
+  }
+
 private:
   static intptr_t _heap_start;
   static CardValue* _cards;
 };
 
-class SodaFreeLineDiscoverer {
-  friend class SodaFreeLineTable;
+class SodaFreeLineDiscoverer : public StackObj {
+  friend class SodaHeapBlock;
 
 public:
   struct Closure {
@@ -73,8 +91,8 @@ public:
     virtual bool do_free_line(MemRegion) = 0;
   };
 
-public:
-  SodaFreeLineDiscoverer(intptr_t block_start) {
+private:
+  void initialize(intptr_t block_start) {
     _begin = SodaFreeLineTable::card_for(block_start);
     _end = _begin + cards_per_block();
 
@@ -88,8 +106,7 @@ public:
   bool discover(Closure*);
 
   void clear_cards() {
-    for (auto iter = _begin; iter != _end; ++iter)
-      *iter = SodaFreeLineTable::clean_card_value();
+    memset(_begin, SodaFreeLineTable::clean_card_value(), _end - _begin);
   }
 
 private:

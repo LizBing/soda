@@ -34,12 +34,6 @@ bool SodaFreeLineDiscoverer::discover(Closure* cl) {
   for (; _iter != _end;) {
     if (*_iter == ccv) {
       auto tmp = _iter;
-/*
-      while (
-        _iter < _end &&
-        *(++_iter) == ccv
-      );
-*/
       for (;;) {
         ++_iter;
         if (_iter == _end) break;

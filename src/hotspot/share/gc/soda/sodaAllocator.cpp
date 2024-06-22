@@ -42,7 +42,7 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks) {
     if (hb != nullptr) goto ret;
   }
 
-  // get source block
+  // get source block & prune
   for (;;) {
     n = _avl.find_equal_or_successor(num_blocks);
     if (n == nullptr) return nullptr;
@@ -54,7 +54,8 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks) {
       // maybe we should reserve some common SSGs for further maintainance
       _avl.erase(n->key());
 
-    break;
+    if (src != nullptr)
+      break;
   }
 
   // process source block
@@ -72,6 +73,8 @@ ret: // record and quit
 }
 
 void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
+  hb->reset();
+
   MutexLocker ml(Heap_lock);
   _num_free_blocks += hb->blocks();
 
@@ -84,7 +87,7 @@ void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
   if (cp != nullptr && cp->is_free()) {
     cp->merge(hb);
     hb = cp;
-  } else hb->reset();
+  }
 
   _reclaim(hb);
 }

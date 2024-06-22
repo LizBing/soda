@@ -110,7 +110,8 @@ public:
 public:
   static void initialize(intptr_t start) {
     _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
-    auto hb = new SodaHeapBlock(start, _num_free_blocks);
+    auto hb = SodaHeapBlocks::at(0);
+    hb->_blocks = _num_free_blocks;
 
     _reclaim(hb);
   }

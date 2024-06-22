@@ -38,6 +38,20 @@ private:
   MemRegion _mr;
 };
 
+SodaHeapBlock::SodaHeapBlock() {
+  auto heap = SodaHeap::heap();
+
+  _idx = (ptrdiff_t)(this - SodaHeapBlocks::_blocks) / sizeof(SodaHeapBlock);
+  _start = intptr_t(heap->reserved_region().start()) +
+           heap->block_size() * _idx;
+
+  _discoverer.initialize(_start);
+  reset(true);
+
+  _cont_next = nullptr;
+  _cont_prev = nullptr;
+}
+
 intptr_t SodaHeapBlock::alloc_rec(size_t s) {
   auto n = alloc_seq(s);
   if (n != 0) return n;
@@ -52,28 +66,26 @@ intptr_t SodaHeapBlock::alloc_rec(size_t s) {
   return alloc_seq(s);
 }
 
-SodaHeapBlock* SodaHeapBlock::partition(int n) {
+SodaHeapBlock* SodaHeapBlock::partition(size_t n) {
   assert(n < _blocks, "target block size should be less than source block.");
   assert(n > 0, "0 sized block is unavailable.");
 
-  auto res = new SodaHeapBlock(_start, n);
-
   _blocks -= n;
-  _start += SodaHeap::heap()->block_size() * n;
+  auto res = SodaHeapBlocks::at(index() + _blocks);
+  res->_blocks = n;
 
-  res->_cont_prev = _cont_prev;
-  res->_cont_next = this;
-  _cont_prev = res;
+  res->_cont_next = _cont_next;
+  res->_cont_prev = this;
+  if (_cont_next)
+    _cont_next->_cont_prev = res;
+  _cont_next = res;
 
   return res;
 }
 
 void SodaHeapBlock::merge(SodaHeapBlock *cn) {
-  assert(
-    intptr_t(_start + SodaHeap::heap()->block_size() * _blocks) ==
-    cn->_start,
-    "should be an upper and contiguous region"
-  );
+  assert(_idx + _blocks == cn->_idx,
+         "should be an upper and contiguous region");
 
   cn->_same_sized_group->erase(cn);
 
@@ -83,6 +95,4 @@ void SodaHeapBlock::merge(SodaHeapBlock *cn) {
   if (next != nullptr)
     next->_cont_prev = this;
   _cont_next = next;
-
-  delete cn;
 }

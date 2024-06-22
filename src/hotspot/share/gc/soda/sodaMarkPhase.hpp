@@ -21,29 +21,10 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODANMETHOD_HPP
-#define SHARE_GC_SODA_SODANMETHOD_HPP
+#ifndef SHARE_GC_SODA_SODAMARKPHASE_HPP
+#define SHARE_GC_SODA_SODAMARKPHASE_HPP
 
-#include "code/nmethod.hpp"
-#include "gc/shared/scavengableNMethods.hpp"
-#include "memory/allStatic.hpp"
-#include "runtime/mutexLocker.hpp"
+class SodaYoungCMPhase {};
 
-// serial for now
-struct SodaNMethodTable : AllStatic {
-  static void register_nmethod(nmethod* nm) {
-    ScavengableNMethods::register_nmethod(nm);
-  }
 
-  static void unregister_nmethod(nmethod* nm) {
-    ScavengableNMethods::unregister_nmethod(nm);
-  }
-
-  static void iterate(CodeBlobToOopClosure* cl) {
-    MutexLocker ml(CodeCache_lock);
-
-    ScavengableNMethods::nmethods_do(cl);
-  }
-};
-
-#endif // SHARE_GC_SODA_SODANMETHOD_HPP
+#endif // SHARE_GC_SODA_SODAMARKPHASE_HPP

@@ -33,16 +33,10 @@
 class SodaHeapBlockStack;
 
 class SodaHeapBlock : public CHeapObj<mtGC> {
-public:
-  explicit SodaHeapBlock(intptr_t start, int blocks = 1)
-  : _start(start),
-  _blocks(blocks),
-  _discoverer(start),
-  _same_sized_group(nullptr),
-  _cont_prev(nullptr),
-  _cont_next(nullptr) {
-    reset(true);
-  }
+  friend class SodaHeapBlocks;
+  friend class SodaGlobalAllocator;
+
+  SodaHeapBlock();
 
 public:
   static SodaHeapBlock* volatile* next_ptr(SodaHeapBlock& n) {
@@ -58,6 +52,10 @@ public:
     return MemRegion((HeapWord*)_start, SodaHeap::heap()->block_size());
   }
 
+  uintx index() { return _idx; }
+
+  bool should_be_evacuate() { return _should_be_evacuate; }
+
   void set_same_sized_group(SodaHeapBlockStack* n) { _same_sized_group = n; }
 
   SodaHeapBlock* prev() { return _prev; }
@@ -70,6 +68,8 @@ public:
 
   void reset(bool init = false) {
     _free = true;
+    _should_be_evacuate = false;
+
     _bumper.fill(_start, _start + SodaHeap::heap()->block_size());
     if (!init)
       _discoverer.reset();
@@ -81,8 +81,8 @@ public:
   // forward
   void clear_cards() { _discoverer.clear_cards(); }
 
-public:
-  SodaHeapBlock* partition(int n);
+private:
+  SodaHeapBlock* partition(size_t n);
   // @cn: contiguously next block
   void merge(SodaHeapBlock* cn);
 
@@ -91,10 +91,13 @@ public:
   intptr_t alloc_rec(size_t);   // only used by small sized objects allocation
 
 private:
+  uintx _idx;
+
   intptr_t _start;
-  int _blocks;
+  size_t _blocks;
 
   bool _free;
+  bool _should_be_evacuate;
 
   SodaBumper _bumper;
   SodaFreeLineDiscoverer _discoverer;

@@ -29,6 +29,28 @@
 #include "memory/allStatic.hpp"
 #include "utilities/lockFreeStack.hpp"
 
+class SodaHeapBlocks : AllStatic {
+  friend class SodaHeapBlock;
+
+public:
+  static void initialize() {
+    _blocks = new SodaHeapBlock[size()];
+  }
+
+public:
+  static size_t size() {
+    return SodaHeap::heap()->capacity_in_blocks();
+  }
+
+  static SodaHeapBlock* at(uintx idx) {
+    assert(idx < size(), "invaild block index");
+    return _blocks + idx;
+  }
+
+private:
+  static SodaHeapBlock* _blocks;
+};
+
 using SodaHeapBlockLFStack =
   LockFreeStack<SodaHeapBlock, SodaHeapBlock::next_ptr>;
 
