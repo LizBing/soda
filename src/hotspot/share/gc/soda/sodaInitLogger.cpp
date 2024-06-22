@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2024, Lei Zaakjyu. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Lei Zaakjyu(E-mail: leizaakjyu@163.com) if you need additional
+ * information or have any questions.
  *
  */
 
@@ -35,7 +34,7 @@ void SodaInitLogger::print_gc_specific() {
   auto heap = SodaHeap::heap();
 
   log_info(gc)(
-    "Heap block size: " SIZE_FORMAT " bytes,"
+    "Heap block size: " SIZE_FORMAT " bytes, "
     "Block line size: " SIZE_FORMAT " bytes.",
     heap->block_size(),
     heap->line_size()
