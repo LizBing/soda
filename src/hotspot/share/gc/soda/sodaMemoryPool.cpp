@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,24 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#include "precompiled.hpp"
+#include "gc/soda/sodaHeap.hpp"
+#include "gc/soda/sodaMemoryPool.hpp"
 
-#include "utilities/macros.hpp"
+SodaMemoryPool::SodaMemoryPool(SodaHeap* heap) :
+        CollectedMemoryPool("Soda Heap",
+                            heap->capacity(),
+                            heap->max_capacity(),
+                            false),
+        _heap(heap) {
+  assert(UseSodaGC, "sanity");
+}
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(XBarrierSet))                           \
-  ZGC_ONLY(f(ZBarrierSet))                           \
-  SODAGC_ONLY(f(SodaBarrierSet))
+MemoryUsage SodaMemoryPool::get_memory_usage() {
+  size_t initial_sz = initial_size();
+  size_t max_sz     = max_size();
+  size_t used       = used_in_bytes();
+  size_t committed  = committed_in_bytes();
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
-
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
-
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+  return MemoryUsage(initial_sz, used, committed, max_sz);
+}

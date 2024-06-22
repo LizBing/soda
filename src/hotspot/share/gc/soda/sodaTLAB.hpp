@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2024, Lei Zaakjyu. All rights reserved.
+ * Copyright (c) 2024, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +23,41 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#ifndef SHARE_GC_SODA_SODATLAB_HPP
+#define SHARE_GC_SODA_SODATLAB_HPP
 
-#include "utilities/macros.hpp"
+#include "gc/soda/sodaHeap.hpp"
+#include "gc/soda/sodaHeapBlock.hpp"
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(XBarrierSet))                           \
-  ZGC_ONLY(f(ZBarrierSet))                           \
-  SODAGC_ONLY(f(SodaBarrierSet))
+class SodaTLAB {
+public:
+  SodaTLAB()
+  : _small(nullptr),
+    _medium(nullptr) {}
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+public:
+  intptr_t allocate(size_t s) {
+    auto h = SodaHeap::heap();
+    assert(s < h->min_humongous(),
+           "humongous objects should not be allocated using TLAB.");
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
+    if (s < h->line_size())
+      return alloc_small(s);
+    return alloc_medium(s);
+  }
 
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+private:
+  bool refill_small();
+  bool refill_medium();
+
+  intptr_t alloc_small(size_t);
+  intptr_t alloc_medium(size_t);
+
+private:
+  bool _reusing;
+  SodaHeapBlock* _small;
+  SodaHeapBlock* _medium;
+};
+
+
+#endif // SHARE_GC_SODA_SODATLAB_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,36 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#ifndef SHARE_GC_SODA_SODABARRIERSET_HPP
+#define SHARE_GC_SODA_SODABARRIERSET_HPP
 
-#include "utilities/macros.hpp"
+#include "gc/shared/barrierSet.hpp"
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(XBarrierSet))                           \
-  ZGC_ONLY(f(ZBarrierSet))                           \
-  SODAGC_ONLY(f(SodaBarrierSet))
+// No interaction with application is required for Soda, and therefore
+// the barrier set is empty.
+class SodaBarrierSet: public BarrierSet {
+  friend class VMStructs;
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+public:
+  SodaBarrierSet();
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
+  virtual void print_on(outputStream *st) const {}
 
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+  virtual void on_thread_create(Thread* thread);
+  virtual void on_thread_destroy(Thread* thread);
+
+  template <DecoratorSet decorators, typename BarrierSetT = SodaBarrierSet>
+  class AccessBarrier: public BarrierSet::AccessBarrier<decorators, BarrierSetT> {};
+};
+
+template<>
+struct BarrierSet::GetName<SodaBarrierSet> {
+  static const BarrierSet::Name value = BarrierSet::SodaBarrierSet;
+};
+
+template<>
+struct BarrierSet::GetType<BarrierSet::SodaBarrierSet> {
+  typedef ::SodaBarrierSet type;
+};
+
+#endif // SHARE_GC_SODA_SODABARRIERSET_HPP

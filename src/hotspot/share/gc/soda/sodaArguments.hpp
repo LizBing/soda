@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,20 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#ifndef SHARE_GC_SODA_SODAARGUMENTS_HPP
+#define SHARE_GC_SODA_SODAARGUMENTS_HPP
 
-#include "utilities/macros.hpp"
+#include "gc/shared/gcArguments.hpp"
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(XBarrierSet))                           \
-  ZGC_ONLY(f(ZBarrierSet))                           \
-  SODAGC_ONLY(f(SodaBarrierSet))
+class CollectedHeap;
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+class SodaArguments : public GCArguments {
+private:
+  virtual void initialize_alignments();
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
+  virtual void initialize();
+  virtual size_t conservative_max_heap_alignment();
+  virtual CollectedHeap* create_heap();
+};
 
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#endif // SHARE_GC_SODA_SODAARGUMENTS_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,29 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+#include "precompiled.hpp"
+#include "gc/soda/sodaHeap.hpp"
+#include "gc/soda/sodaInitLogger.hpp"
+#include "gc/shared/tlab_globals.hpp"
+#include "logging/log.hpp"
+#include "runtime/globals.hpp"
+#include "runtime/globals_extension.hpp"
+#include "utilities/globalDefinitions.hpp"
 
-#include "utilities/macros.hpp"
+void SodaInitLogger::print_gc_specific() {
+  auto heap = SodaHeap::heap();
 
-// Do something for each concrete barrier set part of the build.
-#define FOR_EACH_CONCRETE_BARRIER_SET_DO(f)          \
-  f(CardTableBarrierSet)                             \
-  EPSILONGC_ONLY(f(EpsilonBarrierSet))               \
-  G1GC_ONLY(f(G1BarrierSet))                         \
-  SHENANDOAHGC_ONLY(f(ShenandoahBarrierSet))         \
-  ZGC_ONLY(f(XBarrierSet))                           \
-  ZGC_ONLY(f(ZBarrierSet))                           \
-  SODAGC_ONLY(f(SodaBarrierSet))
+  log_info(gc)(
+    "Heap block size: " SIZE_FORMAT " bytes,"
+    "Block line size: " SIZE_FORMAT " bytes.",
+    heap->block_size(),
+    heap->line_size()
+  );
 
-#define FOR_EACH_ABSTRACT_BARRIER_SET_DO(f)          \
-  f(ModRef)
+  log_info(gc)("Soda uses immix-constructed heap.");
+}
 
-// Do something for each known barrier set.
-#define FOR_EACH_BARRIER_SET_DO(f)    \
-  FOR_EACH_ABSTRACT_BARRIER_SET_DO(f) \
-  FOR_EACH_CONCRETE_BARRIER_SET_DO(f)
-
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_HPP
+void SodaInitLogger::print() {
+  SodaInitLogger init_log;
+  init_log.print_all();
+}

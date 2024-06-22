@@ -42,6 +42,9 @@
 #if INCLUDE_SHENANDOAHGC
 #include "gc/shenandoah/shenandoah_globals.hpp"
 #endif
+#if INCLUDE_SODAGC
+#include "gc/soda/soda_globals.hpp"
+#endif
 #if INCLUDE_ZGC
 #include "gc/z/shared/z_shared_globals.hpp"
 #endif
@@ -99,6 +102,15 @@
     range,                                                                  \
     constraint))                                                            \
                                                                             \
+  SODAGC_ONLY(GC_SODA_FLAGS(                                                \
+    develop,                                                                \
+    develop_pd,                                                             \
+    product,                                                                \
+    product_pd,                                                             \
+    notproduct,                                                             \
+    range,                                                                  \
+    constraint))                                                            \
+                                                                            \
   ZGC_ONLY(GC_Z_SHARED_FLAGS(                                               \
     develop,                                                                \
     develop_pd,                                                             \
@@ -130,6 +142,9 @@
                                                                             \
   product(bool, UseShenandoahGC, false,                                     \
           "Use the Shenandoah garbage collector")                           \
+                                                                            \
+  product(bool, UseSodaGC, false,                                           \
+          "Use the Soda garbage collector")                                 \
                                                                             \
   product(uint, ParallelGCThreads, 0,                                       \
           "Number of parallel threads parallel gc will use")                \

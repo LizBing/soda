@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017, 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,29 +23,31 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_BARRIERSETCONFIG_INLINE_HPP
-#define SHARE_GC_SHARED_BARRIERSETCONFIG_INLINE_HPP
-
-#include "gc/shared/barrierSetConfig.hpp"
-
-#include "gc/shared/modRefBarrierSet.inline.hpp"
-#include "gc/shared/cardTableBarrierSet.inline.hpp"
-
-#if INCLUDE_EPSILONGC
-#include "gc/epsilon/epsilonBarrierSet.hpp"
-#endif
-#if INCLUDE_G1GC
-#include "gc/g1/g1BarrierSet.inline.hpp"
-#endif
-#if INCLUDE_SHENANDOAHGC
-#include "gc/shenandoah/shenandoahBarrierSet.inline.hpp"
-#endif
-#if INCLUDE_SODAGC
+#include "precompiled.hpp"
 #include "gc/soda/sodaBarrierSet.hpp"
+#include "gc/soda/sodaThreadLocalData.hpp"
+#include "gc/shared/barrierSet.hpp"
+#include "gc/shared/barrierSetAssembler.hpp"
+#include "runtime/javaThread.hpp"
+#ifdef COMPILER1
+#include "gc/shared/c1/barrierSetC1.hpp"
 #endif
-#if INCLUDE_ZGC
-#include "gc/x/xBarrierSet.inline.hpp"
-#include "gc/z/zBarrierSet.inline.hpp"
+#ifdef COMPILER2
+#include "gc/shared/c2/barrierSetC2.hpp"
 #endif
 
-#endif // SHARE_GC_SHARED_BARRIERSETCONFIG_INLINE_HPP
+SodaBarrierSet::SodaBarrierSet() : BarrierSet(
+          make_barrier_set_assembler<BarrierSetAssembler>(),
+          make_barrier_set_c1<BarrierSetC1>(),
+          make_barrier_set_c2<BarrierSetC2>(),
+          nullptr /* barrier_set_nmethod */,
+          nullptr /* barrier_set_stack_chunk */,
+          BarrierSet::FakeRtti(BarrierSet::SodaBarrierSet)) {}
+
+void SodaBarrierSet::on_thread_create(Thread *thread) {
+  SodaThreadLocalData::create(thread);
+}
+
+void SodaBarrierSet::on_thread_destroy(Thread *thread) {
+  SodaThreadLocalData::destroy(thread);
+}

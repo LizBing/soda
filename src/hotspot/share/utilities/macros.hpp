@@ -233,6 +233,24 @@
 #define NOT_SHENANDOAHGC_RETURN_(code) { return code; }
 #endif // INCLUDE_SHENANDOAHGC
 
+#ifndef INCLUDE_SODAGC
+#define INCLUDE_SODAGC 1
+#endif // INCLUDE_SODAGC
+
+#if INCLUDE_SODAGC
+#define SODAGC_ONLY(x) x
+#define SODAGC_ONLY_ARG(arg) arg,
+#define NOT_SODAGC(x)
+#define NOT_SODAGC_RETURN        /* next token must be ; */
+#define NOT_SODAGC_RETURN_(code) /* next token must be ; */
+#else
+#define SODAGC_ONLY(x)
+#define SODAGC_ONLY_ARG(arg)
+#define NOT_SODAGC(x) x
+#define NOT_SODAGC_RETURN        {}
+#define NOT_SODAGC_RETURN_(code) { return code; }
+#endif // INCLUDE_SODAGC
+
 #ifndef INCLUDE_ZGC
 #define INCLUDE_ZGC 1
 #endif // INCLUDE_ZGC

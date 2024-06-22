@@ -191,7 +191,8 @@ class CollectedHeap : public CHeapObj<mtGC> {
     G1,
     Epsilon,
     Z,
-    Shenandoah
+    Shenandoah,
+    Soda
   };
 
  protected:

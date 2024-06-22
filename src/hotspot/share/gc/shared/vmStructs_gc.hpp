@@ -49,6 +49,9 @@
 #if INCLUDE_SHENANDOAHGC
 #include "gc/shenandoah/vmStructs_shenandoah.hpp"
 #endif
+#if INCLUDE_SODAGC
+#include "gc/soda/vmStructs_soda.hpp"
+#endif
 #if INCLUDE_ZGC
 #include "gc/z/shared/vmStructs_z_shared.hpp"
 #endif
@@ -72,6 +75,9 @@
   SHENANDOAHGC_ONLY(VM_STRUCTS_SHENANDOAH(nonstatic_field,                                                                           \
                                volatile_nonstatic_field,                                                                             \
                                static_field))                                                                                        \
+  SODAGC_ONLY(VM_STRUCTS_SODAGC(nonstatic_field,                                                                                     \
+                                volatile_nonstatic_field,                                                                            \
+                                static_field))                                                                                       \
   ZGC_ONLY(VM_STRUCTS_Z_SHARED(nonstatic_field,                                                                                      \
                                volatile_nonstatic_field,                                                                             \
                                static_field))                                                                                        \
@@ -146,6 +152,9 @@
   SHENANDOAHGC_ONLY(VM_TYPES_SHENANDOAH(declare_type,                     \
                              declare_toplevel_type,                       \
                              declare_integer_type))                       \
+  SODAGC_ONLY(VM_TYPES_SODAGC(declare_type,                               \
+                              declare_toplevel_type,                      \
+                              declare_integer_type))                      \
   ZGC_ONLY(VM_TYPES_Z_SHARED(declare_type,                                \
                              declare_toplevel_type,                       \
                              declare_integer_type))                       \
@@ -210,6 +219,8 @@
                                           declare_constant_with_value))     \
   SHENANDOAHGC_ONLY(VM_INT_CONSTANTS_SHENANDOAH(declare_constant,           \
                                      declare_constant_with_value))          \
+  SODAGC_ONLY(VM_INT_CONSTANTS_SHENANDOAH(declare_constant,                 \
+                                          declare_constant_with_value))     \
   ZGC_ONLY(VM_INT_CONSTANTS_Z_SHARED(declare_constant,                      \
                                      declare_constant_with_value))          \
                                                                             \
