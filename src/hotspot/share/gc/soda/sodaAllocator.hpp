@@ -108,7 +108,7 @@ public:
   static int num_free_blocks() { return _num_free_blocks; }
 
 public:
-  static void initialize(intptr_t start) {
+  static void initialize() {
     _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
     auto hb = SodaHeapBlocks::at(0);
     hb->_blocks = _num_free_blocks;
@@ -116,7 +116,7 @@ public:
     _reclaim(hb);
   }
 
-  static SodaHeapBlock* allocate(int num_blocks);
+  static SodaHeapBlock* allocate(uintx num_blocks, int gen);
   static void reclaim(SodaHeapBlock* hb);
 
   static SodaHeapBlock* alloc_reusing(int gen) {

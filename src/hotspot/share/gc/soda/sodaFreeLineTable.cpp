@@ -25,7 +25,6 @@
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
 
-intptr_t SodaFreeLineTable::_heap_start = 0;
 CardValue* SodaFreeLineTable::_cards = nullptr;
 
 bool SodaFreeLineDiscoverer::discover(Closure* cl) {

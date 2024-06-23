@@ -35,8 +35,7 @@ using CardValue = uint8_t;
 
 class SodaFreeLineTable : AllStatic {
 public:
-  static void initialize(intptr_t heap_start) {
-    _heap_start = heap_start;
+  static void initialize() {
     _cards = NEW_C_HEAP_ARRAY(CardValue, size(), mtGC);
     memset(_cards, clean_card_value(), size());
   }
@@ -47,13 +46,16 @@ public:
 
 public:
   static CardValue* card_for(intptr_t p) {
-    auto ls = SodaHeap::heap()->line_size();
+    auto heap = SodaHeap::heap();
+    auto ls = heap->line_size();
+
     p = align_down(p, ls);
-    return _cards + (p - _heap_start) / ls;
+    return _cards + (p - heap->heap_start()) / ls;
   }
 
   static intptr_t addr_for(CardValue* p) {
-    return _heap_start + (p - _cards) * SodaHeap::heap()->line_size();
+    auto heap = SodaHeap::heap();
+    return heap->heap_start() + (p - _cards) * heap->line_size();
   }
 
 private:
@@ -79,7 +81,6 @@ private:
   }
 
 private:
-  static intptr_t _heap_start;
   static CardValue* _cards;
 };
 

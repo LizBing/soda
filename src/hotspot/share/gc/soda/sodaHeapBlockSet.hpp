@@ -49,6 +49,13 @@ public:
     return _blocks + idx;
   }
 
+  static SodaHeapBlock* block_for(intptr_t p) {
+    auto heap = SodaHeap::heap();
+
+    return at((align_down(p, heap->block_size()) - heap->heap_start()) /
+              heap->block_size());
+  }
+
 private:
   static SodaHeapBlock* _blocks;
 };

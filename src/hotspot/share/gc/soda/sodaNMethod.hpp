@@ -32,11 +32,11 @@
 // serial for now
 struct SodaNMethodTable : AllStatic {
   static void register_nmethod(nmethod* nm) {
-    // ScavengableNMethods::register_nmethod(nm);
+    ScavengableNMethods::register_nmethod(nm);
   }
 
   static void unregister_nmethod(nmethod* nm) {
-    // ScavengableNMethods::unregister_nmethod(nm);
+    ScavengableNMethods::unregister_nmethod(nm);
   }
 
   static void iterate(CodeBlobToOopClosure* cl) {

@@ -57,6 +57,7 @@ jint SodaHeap::initialize() {
   MemRegion committed_region((HeapWord*)_virtual_space.low(), (HeapWord*)_virtual_space.high());
 
   initialize_reserved_region(heap_rs);
+  _heap_start = (intptr_t)_reserved.start();
 
   // Enable monitoring
   _monitoring_support = new SodaMonitoringSupport(this);
@@ -65,14 +66,26 @@ jint SodaHeap::initialize() {
   BarrierSet::set_barrier_set(new SodaBarrierSet());
 
   // Initialize facilities
-  SodaFreeLineTable::initialize((intptr_t)_reserved.start());
+  SodaFreeLineTable::initialize();
   SodaHeapBlocks::initialize();
-  SodaGlobalAllocator::initialize((intptr_t)_reserved.start());
+  SodaGlobalAllocator::initialize();
 
   // All done, print out the configuration
   SodaInitLogger::print();
 
   return JNI_OK;
+}
+
+struct SodaScavengable : public BoolObjectClosure {
+  bool do_object_b(oop obj) override { return true; }
+};
+
+static SodaScavengable _is_scavengable;
+
+void SodaHeap::post_initialize() {
+  CollectedHeap::post_initialize();
+
+  ScavengableNMethods::initialize(&_is_scavengable);
 }
 
 void SodaHeap::initialize_serviceability() {
@@ -106,7 +119,7 @@ HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceed
            allocate(s);
 
   int num_blocks = align_up(s, block_size()) / block_size();
-  auto hb = SodaGlobalAllocator::allocate(num_blocks);
+  auto hb = SodaGlobalAllocator::allocate(num_blocks, SodaGenEnum::young_gen);
   if (hb == nullptr) return nullptr;
 
   SodaBlockArchive::record_humongous(hb);

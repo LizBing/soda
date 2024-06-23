@@ -33,7 +33,7 @@ bool SodaTLAB::refill_small() {
 
   _small = SodaGlobalAllocator::alloc_reusing(SodaGenEnum::young_gen);
   if (_small == nullptr) {
-    _small = SodaGlobalAllocator::allocate(1);
+    _small = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
     if (_small == nullptr) return false;
     _reusing = false;
   } else _reusing = true;
@@ -45,7 +45,7 @@ bool SodaTLAB::refill_medium() {
   if (_medium != nullptr)
     SodaBlockArchive::record_young(_medium);
 
-  _medium = SodaGlobalAllocator::allocate(1);
+  _medium = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
   return _medium != nullptr ? true : false;
 }
 
