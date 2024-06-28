@@ -63,15 +63,8 @@ void SodaArguments::initialize() {
 }
 
 void SodaArguments::initialize_alignments() {
-  size_t align = DEFAULT_CACHE_LINE_SIZE *
-                 SodaCacheLinesPerBlockLine *
-                 SodaLinesPerHeapBlock;
-
-  // I think we should ignore the 'UseLargePages' flag,
-  // in order to make the heap well blockly aligned.
-  if (UseLargePages)
-    align = MAX2(align, os::large_page_size());
-
+  size_t page_size = UseLargePages ? os::large_page_size() : os::vm_page_size();
+  size_t align = MAX2(os::vm_allocation_granularity(), page_size);
   SpaceAlignment = align;
   HeapAlignment  = align;
 }

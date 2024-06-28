@@ -86,7 +86,7 @@ public:
   void clear_cards() { _discoverer.clear_cards(); }
 
 private:
-  SodaHeapBlock* partition(size_t n);
+  SodaHeapBlock* partition(int n);
   // @cn: contiguously next block
   void merge(SodaHeapBlock* cn);
 

@@ -81,7 +81,7 @@ public:
 
   // false for now
   bool requires_barriers(stackChunkOop obj) const override { return false; }
-  // bool uses_stack_watermark_barrier() const override { return true; }
+  bool uses_stack_watermark_barrier() const override { return false; }
 
   bool is_maximal_no_gc() const override { return used() == max_capacity(); }
 

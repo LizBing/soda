@@ -113,7 +113,6 @@ HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceed
   *gc_overhead_limit_was_exceeded = false;
 
   auto s = size * HeapWordSize;
-
   if (s < min_humongous())
     return (HeapWord*)SodaThreadLocalData::tlab(Thread::current())->
            allocate(s);

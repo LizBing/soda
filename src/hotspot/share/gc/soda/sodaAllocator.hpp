@@ -116,7 +116,7 @@ public:
     _reclaim(hb);
   }
 
-  static SodaHeapBlock* allocate(uintx num_blocks, int gen);
+  static SodaHeapBlock* allocate(int num_blocks, int gen);
   static void reclaim(SodaHeapBlock* hb);
 
   static SodaHeapBlock* alloc_reusing(int gen) {

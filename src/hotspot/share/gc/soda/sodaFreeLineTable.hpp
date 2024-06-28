@@ -64,7 +64,7 @@ private:
 public:
   // no need to provide a parallel version
   static void mark(oop p) {
-    auto start = card_for((intptr_t)p.obj());
+    auto start = card_for((intptr_t)(void*)p);
     auto cards = cards_to_mark(p);
 
     for (int i = 0; i < cards; ++i)
@@ -74,7 +74,7 @@ public:
 private:
   static int cards_to_mark(oop p) {
     auto ls = SodaHeap::heap()->line_size();
-    auto addr = (intptr_t)p.obj();
+    auto addr = (intptr_t)(void*)p;
     auto len = (p->size() - 1) * HeapWordSize;
 
     return (align_down(addr + len, ls) - align_down(addr, ls)) / ls + 1;

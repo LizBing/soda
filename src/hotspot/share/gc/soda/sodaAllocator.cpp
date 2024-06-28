@@ -30,7 +30,7 @@ SodaGlobalAllocator::AVL SodaGlobalAllocator::_avl;
 SodaHeapBlockStack SodaGlobalAllocator::_stack;
 SodaHeapBlockLFStack SodaGlobalAllocator::_lfs[SodaGenEnum::num_gens];
 
-SodaHeapBlock* SodaGlobalAllocator::allocate(uintx num_blocks, int gen) {
+SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
   SodaHeapBlock* src = nullptr;
   AVL::Node* n = nullptr;
 
@@ -70,6 +70,7 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(uintx num_blocks, int gen) {
 ret: // record and quit
   hb->_gen = gen;
   _num_free_blocks -= num_blocks;
+
   return hb;
 }
 

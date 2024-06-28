@@ -43,8 +43,7 @@ SodaHeapBlock::SodaHeapBlock() {
 
   _idx = (ptrdiff_t)((intptr_t)this - (intptr_t)SodaHeapBlocks::_blocks) /
          sizeof(SodaHeapBlock);
-  _start = intptr_t(heap->reserved_region().start()) +
-           heap->block_size() * _idx;
+  _start = intptr_t(heap->heap_start()) + heap->block_size() * _idx;
 
   _discoverer.initialize(_start);
   reset(true);
@@ -67,7 +66,7 @@ intptr_t SodaHeapBlock::alloc_rec(size_t s) {
   return alloc_seq(s);
 }
 
-SodaHeapBlock* SodaHeapBlock::partition(size_t n) {
+SodaHeapBlock* SodaHeapBlock::partition(int n) {
   assert(n < _blocks, "target block size should be less than source block.");
   assert(n > 0, "0 sized block is unavailable.");
 
