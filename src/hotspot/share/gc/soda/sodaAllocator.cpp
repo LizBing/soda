@@ -43,7 +43,7 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
   }
 
   // get source block & prune
-  for (;;) {
+  {
     n = _avl.find_equal_or_successor(num_blocks);
     if (n == nullptr) return nullptr;
 
@@ -53,9 +53,6 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
       // abandoned 0 sized same sized group
       // maybe we should reserve some common SSGs for further maintainance
       _avl.erase(n->key());
-
-    if (src != nullptr)
-      break;
   }
 
   // process source block

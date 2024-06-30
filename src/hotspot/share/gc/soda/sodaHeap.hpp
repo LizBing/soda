@@ -77,7 +77,9 @@ public:
   }
   size_t used()         const override;
 
-  bool is_in(const void* p) const override { return _reserved.contains(p); }
+  bool is_in(const void* p) const override {
+    return is_in_reserved(p);
+  }
 
   // false for now
   bool requires_barriers(stackChunkOop obj) const override { return false; }
@@ -91,7 +93,6 @@ public:
   // TLAB allocation
   size_t tlab_capacity(Thread* thr)         const override { return HeapWordSize; }
   size_t tlab_used(Thread* thr)             const override { return HeapWordSize; }
-  // size_t unsafe_max_tlab_alloc(Thread* thr) const override;
 
   void collect(GCCause::Cause cause) override;
   void do_full_collection(bool clear_all_soft_refs) override;

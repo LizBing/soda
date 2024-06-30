@@ -71,7 +71,7 @@ SodaHeapBlock* SodaHeapBlock::partition(int n) {
   assert(n > 0, "0 sized block is unavailable.");
 
   _blocks -= n;
-  auto res = SodaHeapBlocks::at(index() + _blocks);
+  auto res = SodaHeapBlocks::at(_idx + _blocks);
   res->_blocks = n;
 
   res->_cont_next = _cont_next;

@@ -26,8 +26,6 @@
 
 #include "gc/shared/barrierSet.hpp"
 
-// No interaction with application is required for Soda, and therefore
-// the barrier set is empty.
 class SodaBarrierSet: public BarrierSet {
   friend class VMStructs;
 

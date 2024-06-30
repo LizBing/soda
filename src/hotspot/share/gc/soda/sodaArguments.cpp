@@ -44,11 +44,6 @@ void SodaArguments::initialize() {
     FLAG_SET_DEFAULT(ExitOnOutOfMemoryError, true);
   }
 
-  if (UseTLAB)
-    log_info(gc)(
-      "The TLAB only allocates medium objects."
-      "The 'UseTLAB' flag is set to false for flexible usage of TLAB facility."
-    );
   FLAG_SET_DEFAULT(UseTLAB, false);
 
 #ifdef COMPILER2
@@ -63,10 +58,10 @@ void SodaArguments::initialize() {
 }
 
 void SodaArguments::initialize_alignments() {
-  size_t page_size = UseLargePages ? os::large_page_size() : os::vm_page_size();
-  size_t align = MAX2(os::vm_allocation_granularity(), page_size);
-  SpaceAlignment = align;
-  HeapAlignment  = align;
+  SpaceAlignment = DEFAULT_CACHE_LINE_SIZE *
+                   SodaCacheLinesPerBlockLine *
+                   SodaLinesPerHeapBlock;
+  HeapAlignment  = SpaceAlignment;
 }
 
 CollectedHeap* SodaArguments::create_heap() {

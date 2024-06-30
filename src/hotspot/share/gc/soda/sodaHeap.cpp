@@ -43,32 +43,33 @@
 
 jint SodaHeap::initialize() {
   size_t align = HeapAlignment;
-  size_t byte_size  = align_up(MaxHeapSize, align);
 
-  // Hot field
   _line_size = DEFAULT_CACHE_LINE_SIZE * SodaCacheLinesPerBlockLine;
   _block_size = _line_size * SodaLinesPerHeapBlock;
-  _capacity_in_blocks = byte_size / block_size();
+
+  size_t hsize = align_up(MaxHeapSize, align);
+  _capacity_in_blocks  = hsize / _block_size;
 
   // Initialize backing storage
-  ReservedHeapSpace heap_rs = Universe::reserve_heap(byte_size, align);
-  _virtual_space.initialize(heap_rs, byte_size);
+  ReservedHeapSpace heap_rs = Universe::reserve_heap(hsize, align);
+  _virtual_space.initialize(heap_rs, hsize);
 
-  MemRegion committed_region((HeapWord*)_virtual_space.low(), (HeapWord*)_virtual_space.high());
+  MemRegion committed_region((HeapWord*)_virtual_space.low(),
+                             (HeapWord*)_virtual_space.high());
 
   initialize_reserved_region(heap_rs);
   _heap_start = (intptr_t)_reserved.start();
+
+  // Initialize facilities
+  SodaFreeLineTable::initialize();
+  SodaHeapBlocks::initialize();
+  SodaGlobalAllocator::initialize();
 
   // Enable monitoring
   _monitoring_support = new SodaMonitoringSupport(this);
 
   // Install barrier set
   BarrierSet::set_barrier_set(new SodaBarrierSet());
-
-  // Initialize facilities
-  SodaFreeLineTable::initialize();
-  SodaHeapBlocks::initialize();
-  SodaGlobalAllocator::initialize();
 
   // All done, print out the configuration
   SodaInitLogger::print();
@@ -135,8 +136,6 @@ void SodaHeap::collect(GCCause::Cause cause) {
     case GCCause::_metadata_GC_threshold:
     case GCCause::_metadata_GC_clear_soft_refs:
       // Receiving these causes means the VM itself entered the safepoint for metadata collection.
-      // While Soda does not do GC, it has to perform sizing adjustments, otherwise we would
-      // re-enter the safepoint again very soon.
 
       assert(SafepointSynchronize::is_at_safepoint(), "Expected at safepoint");
       log_info(gc)("GC request for \"%s\" is handled", GCCause::to_string(cause));
