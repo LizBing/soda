@@ -53,7 +53,9 @@ retry:
   if (trigger)
     SodaBlockArchive::record_young(_small);
 
-  _small_bumper.fill((intptr_t)mr.start(), (intptr_t)mr.end());
+  refill_helper(&_small_bumper);
+
+  _small_bumper.fill(mr);
 
   return true;
 }
@@ -63,27 +65,36 @@ bool SodaTLAB::refill_medium() {
   if (hb == nullptr) return false;
   SodaBlockArchive::record_young(hb);
 
-  _medium_bumper.fill(hb->start(), hb->start() + SodaHeap::heap()->block_size());
+  refill_helper(&_medium_bumper);
+
+  _medium_bumper.fill(hb->mr());
 
   return true;
 }
 
 intptr_t SodaTLAB::alloc_small(size_t s) {
-  intptr_t res = 0;
   if (!_small_bumper.empty()) {
-    res = _small_bumper.bump(s);
-    if (res != 0) return res;
+    auto min_dummy = CollectedHeap::min_dummy_object_size() * HeapWordSize;
+    auto remaining = _small_bumper.remaining();
+
+    if (remaining == s ||
+        remaining >= s + min_dummy)
+      return _small_bumper.bump(s);
   }
 
   return refill_small() ? _small_bumper.bump(s) : 0;
 }
 
 intptr_t SodaTLAB::alloc_medium(size_t s) {
-  intptr_t res = 0;
   if (!_medium_bumper.empty()) {
-    res = _medium_bumper.bump(s);
-    if (res != 0) return res;
+    auto min_dummy = CollectedHeap::min_dummy_object_size() * HeapWordSize;
+    auto remaining = _medium_bumper.remaining();
+
+    if (remaining == s ||
+        remaining >= s + min_dummy)
+      return _medium_bumper.bump(s);
   }
+
   return refill_medium() ? _medium_bumper.bump(s) : 0;
 }
 

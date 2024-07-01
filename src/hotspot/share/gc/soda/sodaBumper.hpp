@@ -24,6 +24,7 @@
 #ifndef SHARE_GC_SODA_SODABUMPER_HPP
 #define SHARE_GC_SODA_SODABUMPER_HPP
 
+#include "memory/memRegion.hpp"
 #include "runtime/atomic.hpp"
 
 // General sequential allocator
@@ -40,9 +41,17 @@ public:
     _empty = false;
   }
 
+  void fill(MemRegion mr) {
+    fill((intptr_t)mr.start(), (intptr_t)mr.end());
+  }
+
 public:
   bool empty() { return _empty; }
   void set_empty() { _empty = true; }
+
+  intptr_t top() { return _top; }
+  intptr_t end() { return _end; }
+  size_t remaining() { return _end - _top; }
 
 public:
   intptr_t bump(size_t size) {
@@ -59,16 +68,15 @@ public:
 
  intptr_t par_bump(size_t size) {
     assert(!_empty, "The bumper should be filled before bumping.");
-
     intptr_t res = 0;
-    intptr_t des = 0;
+    intptr_t new_top = 0;
 
     do {
       res = Atomic::load(&_top);
-      des = res + size;
+      new_top = res + size;
 
-      if (des > _end) return 0;
-    } while (!Atomic::cmpxchg(&_top, res, des));
+      if (new_top > _end) return 0;
+    } while (res != Atomic::cmpxchg(&_top, res, new_top));
 
     return res;
   }

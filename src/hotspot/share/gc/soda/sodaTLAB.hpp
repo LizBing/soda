@@ -50,6 +50,12 @@ public:
 private:
   bool refill_small();
   bool refill_medium();
+  void refill_helper(SodaBumper* b) {
+    if (!b->empty() && b->remaining() > 0)
+      SodaHeap::heap()->fill_with_dummy_object(
+        (HeapWord*)b->top(),
+        (HeapWord*)b->end(), false);
+  }
 
   intptr_t alloc_small(size_t);
   intptr_t alloc_medium(size_t);
