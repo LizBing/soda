@@ -21,36 +21,15 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
-#define SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
+#ifndef SHARE_GC_SODA_SODACARDTABLE_HPP
+#define SHARE_GC_SODA_SODACARDTABLE_HPP
 
-#include "gc/soda/sodaTLAB.hpp"
-#include "gc/shared/gc_globals.hpp"
-#include "runtime/javaThread.hpp"
-#include "utilities/debug.hpp"
+#include "memory/allocation.hpp"
 
-class SodaThreadLocalData {
-private:
-  SodaTLAB _tlab;
-
-private:
-  SodaThreadLocalData(): _tlab() {}
-
-  static SodaThreadLocalData* data(Thread* thread) {
-    assert(UseSodaGC, "Sanity");
-    return thread->gc_data<SodaThreadLocalData>();
-  }
-
+class SodaCardTable : StackObj {
 public:
-  static void create(Thread* thread) {
-    new (data(thread)) SodaThreadLocalData();
-  }
-
-  static void destroy(Thread* thread) {
-    data(thread)->~SodaThreadLocalData();
-  }
-
-  static SodaTLAB* tlab(Thread* thread) { return &data(thread)->_tlab; }
+  void initialize();
 };
 
-#endif // SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
+
+#endif // SHARE_GC_SODA_SODACARDTABLE_HPP

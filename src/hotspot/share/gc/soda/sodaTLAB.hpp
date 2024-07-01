@@ -24,14 +24,17 @@
 #ifndef SHARE_GC_SODA_SODATLAB_HPP
 #define SHARE_GC_SODA_SODATLAB_HPP
 
+#include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
 
 class SodaTLAB {
 public:
-  SodaTLAB()
-  : _small(nullptr),
-    _medium(nullptr) {}
+  SodaTLAB():
+    _reusing(false),
+    _small(nullptr),
+    _small_bumper(),
+    _medium_bumper() {}
 
 public:
   intptr_t allocate(size_t s) {
@@ -54,7 +57,10 @@ private:
 private:
   bool _reusing;
   SodaHeapBlock* _small;
-  SodaHeapBlock* _medium;
+  SodaBumper _small_bumper;
+
+  SodaBumper _medium_bumper;
+
 };
 
 

@@ -83,16 +83,22 @@ public:
 
   // false for now
   bool requires_barriers(stackChunkOop obj) const override { return false; }
-  bool uses_stack_watermark_barrier() const override { return false; }
+  bool uses_stack_watermark_barrier()       const override { return false; }
 
   bool is_maximal_no_gc() const override { return used() == max_capacity(); }
 
   // Allocation
-  HeapWord* mem_allocate(size_t size, bool* gc_overhead_limit_was_exceeded) override;
+  HeapWord* mem_allocate(size_t size,
+                         bool* gc_overhead_limit_was_exceeded) override;
 
+  // disabled for now
   // TLAB allocation
-  size_t tlab_capacity(Thread* thr)         const override { return HeapWordSize; }
-  size_t tlab_used(Thread* thr)             const override { return HeapWordSize; }
+  size_t tlab_capacity(Thread* thr) const override {
+    return HeapWordSize;
+  }
+  size_t tlab_used(Thread* thr) const override {
+    return HeapWordSize;
+  }
 
   void collect(GCCause::Cause cause) override;
   void do_full_collection(bool clear_all_soft_refs) override;
@@ -103,7 +109,6 @@ public:
   void pin_object(JavaThread* thread, oop obj) override {
     GCLocker::lock_critical(thread);
   }
-
   void unpin_object(JavaThread* thread, oop obj) override {
     GCLocker::unlock_critical(thread);
   }
@@ -117,11 +122,9 @@ public:
   void register_nmethod(nmethod* nm) override {
     SodaNMethodTable::register_nmethod(nm);
   }
-
   void unregister_nmethod(nmethod* nm) override {
     SodaNMethodTable::unregister_nmethod(nm);
   }
-
   // unsupported
   void verify_nmethod(nmethod* nm) override {}
 
@@ -130,11 +133,9 @@ public:
   void verify(VerifyOption option) override {}
 
   MemRegion reserved_region() const { return _reserved; }
-  bool is_in_reserved(const void* addr) const { return _reserved.contains(addr); }
-
-  // Support for loading objects from CDS archive into the heap
-  bool can_load_archived_objects() const override { return UseCompressedOops; }
-  HeapWord* allocate_loaded_archive_space(size_t size) override;
+  bool is_in_reserved(const void* addr) const {
+    return _reserved.contains(addr);
+  }
 
   void print_on(outputStream* st) const override;
   void print_tracing_info() const override;

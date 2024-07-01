@@ -23,7 +23,7 @@
 
 #include "precompiled.hpp"
 #include "gc/soda/sodaAllocator.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
+#include "gc/soda/sodaHeapBlock.inline.hpp"
 
 class RecycleClosure : public SodaFreeLineDiscoverer::Closure {
 public:
@@ -38,61 +38,48 @@ private:
   MemRegion _mr;
 };
 
+
 SodaHeapBlock::SodaHeapBlock() {
   auto heap = SodaHeap::heap();
 
-  _idx = (ptrdiff_t)((intptr_t)this - (intptr_t)SodaHeapBlocks::_blocks) /
-         sizeof(SodaHeapBlock);
-  _start = intptr_t(heap->heap_start()) + heap->block_size() * _idx;
+  _start = intptr_t(heap->heap_start()) + heap->block_size() * index();
 
   _discoverer.initialize(_start);
+
   reset(true);
-
-  _cont_next = nullptr;
-  _cont_prev = nullptr;
 }
 
-intptr_t SodaHeapBlock::alloc_rec(size_t s) {
-  auto n = alloc_seq(s);
-  if (n != 0) return n;
-
-  RecycleClosure cl;
-  if (_discoverer.discover(&cl))
-    return 0;
-
-  auto mr = cl.discovery();
-  _bumper.fill((intptr_t)mr.start(), (intptr_t)mr.end());
-
-  return alloc_seq(s);
-}
 
 SodaHeapBlock* SodaHeapBlock::partition(int n) {
   assert(n < _blocks, "target block size should be less than source block.");
   assert(n > 0, "0 sized block is unavailable.");
 
+  auto idx = index();
+
   _blocks -= n;
-  auto res = SodaHeapBlocks::at(_idx + _blocks);
+  auto res = SodaHeapBlocks::at(idx + _blocks);
   res->_blocks = n;
 
-  res->_cont_next = _cont_next;
-  res->_cont_prev = this;
-  if (_cont_next)
-    _cont_next->_cont_prev = res;
-  _cont_next = res;
+  last()->_header = this;
+  res->last()->_header = res;
 
   return res;
 }
 
 void SodaHeapBlock::merge(SodaHeapBlock *cn) {
-  assert(_idx + _blocks == cn->_idx,
+  assert(index() + _blocks == cn->index(),
          "should be an upper and contiguous region");
 
   cn->_same_sized_group->erase(cn);
 
   _blocks += cn->_blocks;
+  cn->last()->_header = this;
+}
 
-  auto next = cn->_cont_next;
-  if (next != nullptr)
-    next->_cont_prev = this;
-  _cont_next = next;
+MemRegion SodaHeapBlock::discover_one_recyclable(bool* succeeded) {
+  RecycleClosure cl;
+
+  *succeeded = !_discoverer.discover(&cl);
+
+  return cl.discovery();
 }

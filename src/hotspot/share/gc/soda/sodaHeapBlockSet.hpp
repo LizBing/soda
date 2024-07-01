@@ -56,6 +56,10 @@ public:
               heap->block_size());
   }
 
+  static SodaHeapBlock* block_for(oop p) {
+    return block_for((intptr_t)(void*)p);
+  }
+
 private:
   static SodaHeapBlock* _blocks;
 };

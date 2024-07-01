@@ -28,7 +28,7 @@
 #include "gc/soda/sodaAVL.hpp"
 #include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaGenEnum.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
+#include "gc/soda/sodaHeapBlock.inline.hpp"
 #include "gc/soda/sodaHeapBlockSet.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "memory/allStatic.hpp"

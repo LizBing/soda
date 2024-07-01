@@ -21,36 +21,31 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
-#define SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
+#ifndef SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
+#define SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
 
-#include "gc/soda/sodaTLAB.hpp"
-#include "gc/shared/gc_globals.hpp"
-#include "runtime/javaThread.hpp"
-#include "utilities/debug.hpp"
+#include "gc/soda/sodaHeapBlock.hpp"
+#include "gc/soda/sodaHeapBlockSet.hpp"
 
-class SodaThreadLocalData {
-private:
-  SodaTLAB _tlab;
+inline SodaHeapBlock* SodaHeapBlock::cont_next() {
+  auto idx = index() + _blocks;
+  return idx == SodaHeapBlocks::size() ?
+                nullptr :
+                SodaHeapBlocks::at(idx);
+}
 
-private:
-  SodaThreadLocalData(): _tlab() {}
+inline SodaHeapBlock* SodaHeapBlock::cont_prev() {
+  auto idx = index();
+  return idx == 0 ? nullptr : SodaHeapBlocks::at(idx - 1)->_header;
+}
 
-  static SodaThreadLocalData* data(Thread* thread) {
-    assert(UseSodaGC, "Sanity");
-    return thread->gc_data<SodaThreadLocalData>();
-  }
+inline SodaHeapBlock* SodaHeapBlock::last() {
+  return SodaHeapBlocks::at(index() + _blocks - 1);
+}
 
-public:
-  static void create(Thread* thread) {
-    new (data(thread)) SodaThreadLocalData();
-  }
+inline uintx SodaHeapBlock::index() {
+  return ((intptr_t)this - (intptr_t)SodaHeapBlocks::_blocks) /
+         sizeof(SodaHeapBlock);
+}
 
-  static void destroy(Thread* thread) {
-    data(thread)->~SodaThreadLocalData();
-  }
-
-  static SodaTLAB* tlab(Thread* thread) { return &data(thread)->_tlab; }
-};
-
-#endif // SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
+#endif // SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP

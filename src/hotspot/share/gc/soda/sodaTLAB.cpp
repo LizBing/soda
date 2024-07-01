@@ -28,50 +28,62 @@
 #include "gc/soda/sodaTLAB.hpp"
 
 bool SodaTLAB::refill_small() {
-  if (_small != nullptr)
-    SodaBlockArchive::record_young(_small);
+  MemRegion mr;
+  bool ok = false;
+  bool trigger = false;
 
-  _small = SodaGlobalAllocator::alloc_reusing(SodaGenEnum::young_gen);
-  if (_small == nullptr) {
+  if (_reusing)
+retry:
+    mr = _small->discover_one_recyclable(&ok);
+
+  if (!ok) {
+    trigger = true;
+
+    _small = SodaGlobalAllocator::alloc_reusing(SodaGenEnum::young_gen);
+    if (_small != nullptr) {
+      _reusing = true;
+      goto retry;
+    }
+
     _small = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
     if (_small == nullptr) return false;
-    _reusing = false;
-  } else _reusing = true;
+    mr = _small->mr();
+  }
+
+  if (trigger)
+    SodaBlockArchive::record_young(_small);
+
+  _small_bumper.fill((intptr_t)mr.start(), (intptr_t)mr.end());
 
   return true;
 }
 
 bool SodaTLAB::refill_medium() {
-  if (_medium != nullptr)
-    SodaBlockArchive::record_young(_medium);
+  auto hb = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
+  if (hb == nullptr) return false;
+  SodaBlockArchive::record_young(hb);
 
-  _medium = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
-  return _medium != nullptr ? true : false;
+  _medium_bumper.fill(hb->start(), hb->start() + SodaHeap::heap()->block_size());
+
+  return true;
 }
 
 intptr_t SodaTLAB::alloc_small(size_t s) {
   intptr_t res = 0;
-
-  if (_small != nullptr) {
-    res = _reusing ? _small->alloc_rec(s) : _small->alloc_seq(s);
+  if (!_small_bumper.empty()) {
+    res = _small_bumper.bump(s);
     if (res != 0) return res;
   }
 
-  if (refill_small())
-    return alloc_small(s);
-  return 0;
+  return refill_small() ? _small_bumper.bump(s) : 0;
 }
 
 intptr_t SodaTLAB::alloc_medium(size_t s) {
   intptr_t res = 0;
-
-  if (_medium != nullptr) {
-    res = _medium->alloc_seq(s);
+  if (!_medium_bumper.empty()) {
+    res = _medium_bumper.bump(s);
     if (res != 0) return res;
   }
-
-  if (refill_medium())
-    return _medium->alloc_seq(s);
-  return 0;
+  return refill_medium() ? _medium_bumper.bump(s) : 0;
 }
 

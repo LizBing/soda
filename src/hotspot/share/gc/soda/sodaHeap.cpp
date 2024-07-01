@@ -43,22 +43,20 @@
 
 jint SodaHeap::initialize() {
   size_t align = HeapAlignment;
+  size_t hsize = align_up(MaxHeapSize, align);
 
   _line_size = DEFAULT_CACHE_LINE_SIZE * SodaCacheLinesPerBlockLine;
   _block_size = _line_size * SodaLinesPerHeapBlock;
-
-  size_t hsize = align_up(MaxHeapSize, align);
   _capacity_in_blocks  = hsize / _block_size;
 
   // Initialize backing storage
   ReservedHeapSpace heap_rs = Universe::reserve_heap(hsize, align);
   _virtual_space.initialize(heap_rs, hsize);
 
-  MemRegion committed_region((HeapWord*)_virtual_space.low(),
-                             (HeapWord*)_virtual_space.high());
-
   initialize_reserved_region(heap_rs);
   _heap_start = (intptr_t)_reserved.start();
+  if (ZapUnusedHeapArea)
+    memset(_reserved.start(), 0, capacity());
 
   // Initialize facilities
   SodaFreeLineTable::initialize();
@@ -78,7 +76,10 @@ jint SodaHeap::initialize() {
 }
 
 struct SodaScavengable : public BoolObjectClosure {
-  bool do_object_b(oop obj) override { return true; }
+  bool do_object_b(oop obj) override {
+    return SodaHeapBlocks::block_for(obj)->gen() ==
+           SodaGenEnum::young_gen;
+  }
 };
 
 static SodaScavengable _is_scavengable;
@@ -124,11 +125,6 @@ HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceed
 
   SodaBlockArchive::record_humongous(hb);
   return (HeapWord*)hb->start();
-}
-
-HeapWord* SodaHeap::allocate_loaded_archive_space(size_t size) {
-  bool ignorance = false;
-  return mem_allocate(size, &ignorance);
 }
 
 void SodaHeap::collect(GCCause::Cause cause) {

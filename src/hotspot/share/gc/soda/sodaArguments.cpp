@@ -45,22 +45,13 @@ void SodaArguments::initialize() {
   }
 
   FLAG_SET_DEFAULT(UseTLAB, false);
-
-#ifdef COMPILER2
-  // Enable loop strip mining: there are still non-GC safepoints, no need to make it worse
-  if (FLAG_IS_DEFAULT(UseCountedLoopSafepoints)) {
-    FLAG_SET_DEFAULT(UseCountedLoopSafepoints, true);
-    if (FLAG_IS_DEFAULT(LoopStripMiningIter)) {
-      FLAG_SET_DEFAULT(LoopStripMiningIter, 1000);
-    }
-  }
-#endif
 }
 
 void SodaArguments::initialize_alignments() {
-  SpaceAlignment = DEFAULT_CACHE_LINE_SIZE *
-                   SodaCacheLinesPerBlockLine *
-                   SodaLinesPerHeapBlock;
+  size_t block_size = DEFAULT_CACHE_LINE_SIZE *
+                      SodaCacheLinesPerBlockLine *
+                      SodaLinesPerHeapBlock;
+  SpaceAlignment = MAX3(block_size, os::vm_page_size(), os::large_page_size());
   HeapAlignment  = SpaceAlignment;
 }
 

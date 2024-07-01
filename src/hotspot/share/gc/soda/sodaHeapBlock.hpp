@@ -25,7 +25,6 @@
 #define SHARE_GC_SODA_SODAHEAPBLOCK_HPP
 
 #include "gc/soda/sodaHeap.hpp"
-#include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaGenEnum.hpp"
 #include "gc/shared/gc_globals.hpp"
@@ -51,10 +50,11 @@ public:
   intptr_t start() { return _start; }
   int blocks() { return _blocks; }
   MemRegion mr() {
-    return MemRegion((HeapWord*)_start, SodaHeap::heap()->block_size());
+    return MemRegion((HeapWord*)_start,
+                     SodaHeap::heap()->block_size() / HeapWordSize);
   }
 
-  uintx index() { return _idx; }
+  uintx index();
 
   int gen() { return _gen; }
 
@@ -67,14 +67,13 @@ public:
   void set_prev(SodaHeapBlock* n) { _prev = n; }
   void set_next(SodaHeapBlock* n) { _next = n; }
 
-  SodaHeapBlock* cont_prev() { return _cont_prev; }
-  SodaHeapBlock* cont_next() { return _cont_next; }
+  SodaHeapBlock* cont_prev();
+  SodaHeapBlock* cont_next();
 
   void reset(bool init = false) {
     _free = true;
     _should_be_evacuate = false;
 
-    _bumper.fill(_start, _start + SodaHeap::heap()->block_size());
     if (!init)
       _discoverer.reset();
 
@@ -90,13 +89,12 @@ private:
   // @cn: contiguously next block
   void merge(SodaHeapBlock* cn);
 
+  SodaHeapBlock* last();
+
 public:
-  intptr_t alloc_seq(size_t s) { return _bumper.bump(s); }
-  intptr_t alloc_rec(size_t);   // only used by small sized objects allocation
+  MemRegion discover_one_recyclable(bool* succeeded);
 
 private:
-  uintx _idx;
-
   intptr_t _start;
   size_t _blocks;
 
@@ -104,7 +102,6 @@ private:
   bool _should_be_evacuate;
   int _gen;
 
-  SodaBumper _bumper;
   SodaFreeLineDiscoverer _discoverer;
 
 private:
@@ -113,8 +110,7 @@ private:
   SodaHeapBlock* _prev;
   SodaHeapBlock* _next;
 
-  SodaHeapBlock* _cont_prev;
-  SodaHeapBlock* _cont_next;
+  SodaHeapBlock* _header;
 };
 
 #endif // SHARE_GC_SODA_SODAHEAPBLOCK_HPP

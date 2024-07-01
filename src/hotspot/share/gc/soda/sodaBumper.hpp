@@ -29,28 +29,37 @@
 // General sequential allocator
 class SodaBumper {
 public:
-  void fill(intptr_t start, intptr_t end) {
-    _start = start;
+  SodaBumper() :
+    _empty(true),
+    _top(0), _end(0) {}
 
+  void fill(intptr_t start, intptr_t end) {
     _top = start;
     _end = end;
+
+    _empty = false;
   }
 
-  void reset() {
-    _top = _start;
-  }
+public:
+  bool empty() { return _empty; }
+  void set_empty() { _empty = true; }
 
+public:
   intptr_t bump(size_t size) {
-    auto res = _top;
-    _top += size;
+    assert(!_empty, "The bumper should be filled before bumping.");
 
-    if (_top > _end)
-      return 0;
+    auto res = _top;
+    intptr_t new_top = _top + size;
+
+    if (new_top > _end) return 0;
+    _top = new_top;
 
     return res;
   }
 
-  intptr_t par_bump(size_t size) {
+ intptr_t par_bump(size_t size) {
+    assert(!_empty, "The bumper should be filled before bumping.");
+
     intptr_t res = 0;
     intptr_t des = 0;
 
@@ -64,10 +73,10 @@ public:
     return res;
   }
 
-private:
-  volatile intptr_t _top;
+ private:
+  bool _empty;
 
-  intptr_t _start;
+  volatile intptr_t _top;
   intptr_t _end;
 };
 
