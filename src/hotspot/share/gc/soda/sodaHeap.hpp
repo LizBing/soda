@@ -77,9 +77,7 @@ public:
   }
   size_t used()         const override;
 
-  bool is_in(const void* p) const override {
-    return is_in_reserved(p);
-  }
+  bool is_in(const void* p) const override;
 
   // false for now
   bool requires_barriers(stackChunkOop obj) const override { return false; }
@@ -88,8 +86,10 @@ public:
   bool is_maximal_no_gc() const override { return used() == max_capacity(); }
 
   // Allocation
-  HeapWord* mem_allocate(size_t size,
+  HeapWord* mem_allocate(size_t word_size,
                          bool* gc_overhead_limit_was_exceeded) override;
+
+  HeapWord* alloc_humongous(size_t byte_size);
 
   // disabled for now
   // TLAB allocation
@@ -114,7 +114,7 @@ public:
   }
 
   // No support for block parsing.
-  HeapWord* block_start(const void* addr) const { return nullptr;  }
+  HeapWord* block_start(const void* addr) const { return nullptr; }
   bool block_is_obj(const HeapWord* addr) const { return false; }
 
   void gc_threads_do(ThreadClosure* tc) const override {}

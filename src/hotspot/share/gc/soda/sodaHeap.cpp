@@ -75,19 +75,10 @@ jint SodaHeap::initialize() {
   return JNI_OK;
 }
 
-struct SodaScavengable : public BoolObjectClosure {
-  bool do_object_b(oop obj) override {
-    return SodaHeapBlocks::block_for(obj)->gen() ==
-           SodaGenEnum::young_gen;
-  }
-};
-
-static SodaScavengable _is_scavengable;
-
 void SodaHeap::post_initialize() {
   CollectedHeap::post_initialize();
 
-  ScavengableNMethods::initialize(&_is_scavengable);
+  SodaNMethodTable::initialize();
 }
 
 void SodaHeap::initialize_serviceability() {
@@ -119,12 +110,33 @@ HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceed
     return (HeapWord*)SodaThreadLocalData::tlab(Thread::current())->
            allocate(s);
 
-  int num_blocks = align_up(s, block_size()) / block_size();
+  return alloc_humongous(s);
+}
+
+HeapWord* SodaHeap::alloc_humongous(size_t byte_size) {
+  bool trigger = false;
+  size_t size = byte_size;
+
+  if (!is_aligned(size, _block_size)) {
+    size += min_dummy_object_size();
+    trigger = true;
+  }
+
+  int num_blocks = align_up(size, block_size()) / block_size();
+
   auto hb = SodaGlobalAllocator::allocate(num_blocks, SodaGenEnum::young_gen);
   if (hb == nullptr) return nullptr;
 
+  auto start = hb->start();
+
+  if (trigger)
+    fill_with_dummy_object(
+      (HeapWord*)(start + byte_size),
+      (HeapWord*)(start + _block_size * num_blocks), false);
+
   SodaBlockArchive::record_humongous(hb);
-  return (HeapWord*)hb->start();
+
+  return (HeapWord*)start;
 }
 
 void SodaHeap::collect(GCCause::Cause cause) {
@@ -149,7 +161,9 @@ void SodaHeap::do_full_collection(bool clear_all_soft_refs) {
 }
 
 void SodaHeap::object_iterate(ObjectClosure *cl) {
-  log_info(gc)("Heap object iteration is unavailable for now.");
+  // SodaBlockArchive
+
+  log_warning(gc)("Heap object iteration unsupported for now.");
 }
 
 void SodaHeap::print_on(outputStream *st) const {
@@ -213,4 +227,9 @@ size_t SodaHeap::used() const {
 void SodaHeap::stop() {
   SodaGlobalAllocator::clear_lfs();
   SodaBlockArchive::clear();
+}
+
+bool SodaHeap::is_in(const void *p) const {
+  return is_in_reserved(p) ?
+         !SodaHeapBlocks::block_for((intptr_t)p)->is_free() : false;
 }

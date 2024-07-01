@@ -31,6 +31,8 @@
 
 // serial for now
 struct SodaNMethodTable : AllStatic {
+  static void initialize();
+
   static void register_nmethod(nmethod* nm) {
     ScavengableNMethods::register_nmethod(nm);
   }

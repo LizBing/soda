@@ -22,6 +22,18 @@
  */
 
 #include "precompiled.hpp"
+#include "gc/soda/sodaHeapBlockSet.hpp"
 #include "gc/soda/sodaNMethod.hpp"
 
+struct SodaScavengable : public BoolObjectClosure {
+  bool do_object_b(oop obj) override {
+    return SodaHeapBlocks::block_for(obj)->gen() ==
+           SodaGenEnum::young_gen;
+  }
+};
 
+static SodaScavengable _is_scavengable;
+
+void SodaNMethodTable::initialize() {
+  ScavengableNMethods::initialize(&_is_scavengable);
+}

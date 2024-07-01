@@ -44,7 +44,10 @@ public:
     return &n._next;
   }
 
-  void claim_occupied() { _free = false; }
+  void claim_occupied() {
+    for (uint i = 0; i < _blocks; ++i)
+      this[i]._free = false;
+  }
   bool is_free() { return _free; }
 
   intptr_t start() { return _start; }
@@ -71,7 +74,12 @@ public:
   SodaHeapBlock* cont_next();
 
   void reset(bool init = false) {
-    _free = true;
+    if (init)
+      _free = true;
+    else
+      for (uintx i = 0; i < _blocks; ++i)
+        this[i]._free = true;
+
     _should_be_evacuate = false;
 
     if (!init)
