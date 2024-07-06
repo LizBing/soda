@@ -28,10 +28,10 @@
 #include "gc/shared/barrierSetAssembler.hpp"
 #include "runtime/javaThread.hpp"
 #ifdef COMPILER1
-#include "gc/shared/c1/barrierSetC1.hpp"
+#include "gc/soda/c1/sodaBarrierSetC1.hpp"
 #endif
 #ifdef COMPILER2
-#include "gc/shared/c2/barrierSetC2.hpp"
+#include "gc/soda/c2/sodaBarrierSetC2.hpp"
 #endif
 
 SodaBarrierSet::SodaBarrierSet() : BarrierSet(

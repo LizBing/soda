@@ -21,38 +21,10 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODABARRIERSET_HPP
-#define SHARE_GC_SODA_SODABARRIERSET_HPP
+#ifndef SHARE_GC_SODA_C2_SODABARRIERSETC2_HPP
+#define SHARE_GC_SODA_C2_SODABARRIERSETC2_HPP
 
-#include "gc/shared/barrierSet.hpp"
 
-class SodaBarrierSet: public BarrierSet {
-  friend class VMStructs;
 
-public:
-  SodaBarrierSet();
 
-  static SodaBarrierSet* barrier_set() {
-    return barrier_set_cast<SodaBarrierSet>(BarrierSet::barrier_set());
-  }
-
-  virtual void print_on(outputStream *st) const {}
-
-  virtual void on_thread_create(Thread* thread);
-  virtual void on_thread_destroy(Thread* thread);
-
-  template <DecoratorSet decorators, typename BarrierSetT = SodaBarrierSet>
-  class AccessBarrier: public BarrierSet::AccessBarrier<decorators, BarrierSetT> {};
-};
-
-template<>
-struct BarrierSet::GetName<SodaBarrierSet> {
-  static const BarrierSet::Name value = BarrierSet::SodaBarrierSet;
-};
-
-template<>
-struct BarrierSet::GetType<BarrierSet::SodaBarrierSet> {
-  typedef ::SodaBarrierSet type;
-};
-
-#endif // SHARE_GC_SODA_SODABARRIERSET_HPP
+#endif // SHARE_GC_SODA_C2_SODABARRIERSETC2_HPP
