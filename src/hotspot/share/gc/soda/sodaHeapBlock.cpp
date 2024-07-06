@@ -51,7 +51,7 @@ SodaHeapBlock::SodaHeapBlock() {
 
 
 SodaHeapBlock* SodaHeapBlock::partition(int n) {
-  assert(n < _blocks, "target block size should be less than source block.");
+  assert((size_t)n < _blocks, "target block size should be less than source block.");
   assert(n > 0, "0 sized block is unavailable.");
 
   _blocks -= n;
