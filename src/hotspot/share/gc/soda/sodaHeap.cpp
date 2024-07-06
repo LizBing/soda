@@ -118,7 +118,7 @@ HeapWord* SodaHeap::alloc_humongous(size_t byte_size) {
   size_t size = byte_size;
 
   if (!is_aligned(size, _block_size)) {
-    size += min_dummy_object_size();
+    size += min_dummy_object_size() * HeapWordSize;
     trigger = true;
   }
 

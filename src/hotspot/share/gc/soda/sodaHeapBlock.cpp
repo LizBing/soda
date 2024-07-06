@@ -54,10 +54,8 @@ SodaHeapBlock* SodaHeapBlock::partition(int n) {
   assert(n < _blocks, "target block size should be less than source block.");
   assert(n > 0, "0 sized block is unavailable.");
 
-  auto idx = index();
-
   _blocks -= n;
-  auto res = SodaHeapBlocks::at(idx + _blocks);
+  auto res = SodaHeapBlocks::at(index() + _blocks);
   res->_blocks = n;
 
   last()->_header = this;
