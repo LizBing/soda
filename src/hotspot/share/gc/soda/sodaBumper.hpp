@@ -24,11 +24,12 @@
 #ifndef SHARE_GC_SODA_SODABUMPER_HPP
 #define SHARE_GC_SODA_SODABUMPER_HPP
 
+#include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
 #include "runtime/atomic.hpp"
 
 // General sequential allocator
-class SodaBumper {
+class SodaBumper : StackObj {
 public:
   SodaBumper() :
     _empty(true),

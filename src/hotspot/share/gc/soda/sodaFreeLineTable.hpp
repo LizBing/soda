@@ -26,6 +26,7 @@
 
 #include "gc/shared/gc_globals.hpp"
 #include "gc/soda/sodaHeap.hpp"
+#include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/allStatic.hpp"
 
@@ -37,7 +38,7 @@ class SodaFreeLineTable : AllStatic {
 public:
   static void initialize() {
     _cards = NEW_C_HEAP_ARRAY(CardValue, size(), mtGC);
-    memset(_cards, clean_card_value(), size());
+    // memset(_cards, clean_card_value(), size());
   }
 
 public:
@@ -84,11 +85,11 @@ private:
   static CardValue* _cards;
 };
 
-class SodaFreeLineDiscoverer : public StackObj {
+class SodaFreeLineDiscoverer : StackObj {
   friend class SodaHeapBlock;
 
 public:
-  struct Closure {
+  struct Closure : StackObj {
     // return false to stop iteration
     virtual bool do_free_line(MemRegion) = 0;
   };

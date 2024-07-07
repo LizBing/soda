@@ -36,7 +36,7 @@ class SodaHeapBlocks : AllStatic {
 public:
   static void initialize() {
     _blocks = NEW_C_HEAP_ARRAY(SodaHeapBlock, size(), mtGC);
-    new(_blocks) SodaHeapBlock[size()];
+    new(_blocks) SodaHeapBlock[size()]();
   }
 
 public:

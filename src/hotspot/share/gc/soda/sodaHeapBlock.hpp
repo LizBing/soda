@@ -28,6 +28,7 @@
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaGenEnum.hpp"
 #include "gc/shared/gc_globals.hpp"
+#include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
 
 class SodaHeapBlockStack;
@@ -90,7 +91,7 @@ public:
   }
 
   // forward
-  void clear_cards() { _discoverer.clear_cards(); }
+  void clear_cards() { /* _discoverer.clear_cards(); */ }
 
 private:
   SodaHeapBlock* partition(int n);

@@ -27,8 +27,9 @@
 #include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
+#include "memory/allocation.hpp"
 
-class SodaTLAB {
+class SodaTLAB : StackObj {
 public:
   SodaTLAB():
     _reusing(false),
