@@ -158,7 +158,7 @@ public:
   size_t block_size() const { return _block_size; }
 
   intptr_t heap_start() { return _heap_start; }
-  size_t capacity_in_lines() const { return _line_size * _capacity_in_blocks; }
+  size_t capacity_in_lines() const { return SodaLinesPerHeapBlock * _capacity_in_blocks; }
   size_t capacity_in_blocks() const { return _capacity_in_blocks; }
   size_t min_humongous() { return block_size() >> 1; }
 

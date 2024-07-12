@@ -91,7 +91,7 @@ public:
   }
 
   // forward
-  void clear_cards() { /* _discoverer.clear_cards(); */ }
+  void clear_cards() { _discoverer.clear_cards(); }
 
 private:
   SodaHeapBlock* partition(int n);

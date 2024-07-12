@@ -29,6 +29,8 @@
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/allStatic.hpp"
+#include "utilities/debug.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class SodaHeapBlock;
 
@@ -38,7 +40,7 @@ class SodaFreeLineTable : AllStatic {
 public:
   static void initialize() {
     _cards = NEW_C_HEAP_ARRAY(CardValue, size(), mtGC);
-    // memset(_cards, clean_card_value(), size());
+    memset(_cards, clean_card_value(), size());
   }
 
 public:
@@ -51,12 +53,19 @@ public:
     auto ls = heap->line_size();
 
     p = align_down(p, ls);
-    return _cards + (p - heap->heap_start()) / ls;
+    uintx idx = (p - heap->heap_start()) / ls;
+
+    assert(idx >= 0 && idx < size(), "Invaild index.");
+
+    return _cards + idx;
   }
 
   static intptr_t addr_for(CardValue* p) {
     auto heap = SodaHeap::heap();
-    return heap->heap_start() + (p - _cards) * heap->line_size();
+    uintx idx = pointer_delta((HeapWord*)p, (HeapWord*)_cards);
+    assert(idx >= 0 && idx < size(), "Invaild index.");
+
+    return heap->heap_start() + idx * heap->line_size();
   }
 
 private:
@@ -66,9 +75,9 @@ public:
   // no need to provide a parallel version
   static void mark(oop p) {
     auto start = card_for((intptr_t)(void*)p);
-    auto cards = cards_to_mark(p);
+    size_t cards = cards_to_mark(p);
 
-    for (int i = 0; i < cards; ++i)
+    for (uint i = 0; i < cards; ++i)
       start[i] = dirty_card_value();
   }
 
@@ -109,8 +118,11 @@ public:
   bool discover(Closure*);
 
   void clear_cards() {
-    auto s = _end - _begin;
-    memset(_begin, SodaFreeLineTable::clean_card_value(), _end - _begin);
+    auto heap = SodaHeap::heap();
+    size_t s = _end - _begin;
+    assert(s == cards_per_block(), "Should be block sized.");
+
+    memset(_begin, SodaFreeLineTable::clean_card_value(), s);
   }
 
 private:
