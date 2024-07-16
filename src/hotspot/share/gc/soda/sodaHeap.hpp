@@ -35,6 +35,8 @@
 #include "memory/virtualspace.hpp"
 #include "services/memoryManager.hpp"
 
+class WorkerThreads;
+
 // Used as Soda Heap
 class SodaHeap : public CollectedHeap {
   friend class VMStructs;
@@ -103,8 +105,10 @@ public:
   void collect(GCCause::Cause cause) override;
   void do_full_collection(bool clear_all_soft_refs) override;
 
-  // Heap walking support
-  void object_iterate(ObjectClosure* cl) override;
+  // Heap walking unsupport
+  void object_iterate(ObjectClosure* cl) override {
+    log_warning(gc)("Heap object iteration is unsupported.");
+  }
 
   void pin_object(JavaThread* thread, oop obj) override {
     GCLocker::lock_critical(thread);
@@ -117,7 +121,7 @@ public:
   HeapWord* block_start(const void* addr) const { return nullptr; }
   bool block_is_obj(const HeapWord* addr) const { return false; }
 
-  void gc_threads_do(ThreadClosure* tc) const override {}
+  void gc_threads_do(ThreadClosure* tc) const override;
 
   void register_nmethod(nmethod* nm) override {
     SodaNMethodTable::register_nmethod(nm);
@@ -141,6 +145,8 @@ public:
   void print_tracing_info() const override;
   bool print_location(outputStream* st, void* addr) const override;
 
+  WorkerThreads * safepoint_workers() override { return _par_workers; }
+
 private:
   void print_heap_info(size_t used) const;
   void print_metaspace_info() const;
@@ -162,11 +168,15 @@ public:
   size_t capacity_in_blocks() const { return _capacity_in_blocks; }
   size_t min_humongous() { return block_size() >> 1; }
 
+  WorkerThreads* par_workers() { return _par_workers; }
+  WorkerThreads* conc_workers() { return _conc_workers; }
+
 public:
   void stop() override;
 
 private:
-  ;
+  WorkerThreads* _par_workers;
+  WorkerThreads* _conc_workers;
 };
 
 #endif // SHARE_GC_SODA_SODAHEAP_HPP

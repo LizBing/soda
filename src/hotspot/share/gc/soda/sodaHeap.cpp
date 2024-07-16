@@ -21,6 +21,8 @@
  *
  */
 
+#include "gc/shared/gc_globals.hpp"
+#include "gc/shared/workerThread.hpp"
 #include "precompiled.hpp"
 #include "gc/shared/gcArguments.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
@@ -68,6 +70,9 @@ jint SodaHeap::initialize() {
 
   // Install barrier set
   BarrierSet::set_barrier_set(new SodaBarrierSet());
+
+  _par_workers = new WorkerThreads("Soda Parallel Worker", ParallelGCThreads);
+  _conc_workers = new WorkerThreads("Soda Concurrent Worker", ConcGCThreads);
 
   // All done, print out the configuration
   SodaInitLogger::print();
@@ -160,12 +165,6 @@ void SodaHeap::do_full_collection(bool clear_all_soft_refs) {
   collect(gc_cause());
 }
 
-void SodaHeap::object_iterate(ObjectClosure *cl) {
-  // SodaBlockArchive
-
-  log_warning(gc)("Heap object iteration unsupported for now.");
-}
-
 void SodaHeap::print_on(outputStream *st) const {
   st->print_cr("Soda Heap");
 
@@ -232,4 +231,9 @@ void SodaHeap::stop() {
 bool SodaHeap::is_in(const void *p) const {
   return is_in_reserved(p) ?
          !SodaHeapBlocks::block_for((intptr_t)p)->is_free() : false;
+}
+
+void SodaHeap::gc_threads_do(ThreadClosure *tc) const {
+  _par_workers->threads_do(tc);
+  _conc_workers->threads_do(tc);
 }
