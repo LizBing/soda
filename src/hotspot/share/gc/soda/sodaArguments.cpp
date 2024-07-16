@@ -51,7 +51,7 @@ void SodaArguments::initialize_alignments() {
   size_t block_size = DEFAULT_CACHE_LINE_SIZE *
                       SodaCacheLinesPerBlockLine *
                       SodaLinesPerHeapBlock;
-  SpaceAlignment = MAX3(block_size, os::vm_page_size(), os::large_page_size());
+  SpaceAlignment = block_size;
   HeapAlignment  = SpaceAlignment;
 }
 
