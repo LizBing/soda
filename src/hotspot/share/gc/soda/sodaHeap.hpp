@@ -51,8 +51,7 @@ private:
 public:
   static SodaHeap* heap();
 
-  SodaHeap() :
-          _memory_manager("Soda Heap") {}
+  SodaHeap();
 
   Name kind() const override {
     return CollectedHeap::Soda;

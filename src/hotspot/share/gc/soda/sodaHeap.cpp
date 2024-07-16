@@ -21,6 +21,7 @@
  *
  */
 
+#include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "gc/shared/workerThread.hpp"
 #include "precompiled.hpp"
@@ -42,6 +43,11 @@
 #include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
+
+SodaHeap::SodaHeap():
+  _memory_manager("Soda Heap") {
+  assert(sizeof(GCThreadLocalData) >= sizeof(SodaThreadLocalData), "Sanity.");
+}
 
 jint SodaHeap::initialize() {
   size_t align = HeapAlignment;

@@ -24,6 +24,7 @@
 #ifndef SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
 #define SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
 
+#include "gc/shared/plab.hpp"
 #include "gc/soda/sodaTLAB.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "runtime/javaThread.hpp"
@@ -32,6 +33,7 @@
 class SodaThreadLocalData {
 private:
   SodaTLAB _tlab;
+  PLAB* _gclab;
 
 private:
   SodaThreadLocalData(): _tlab() {}
@@ -51,6 +53,7 @@ public:
   }
 
   static SodaTLAB* tlab(Thread* thread) { return &data(thread)->_tlab; }
+  static PLAB* gclab(Thread* thread) { return data(thread)->_gclab; }
 };
 
 #endif // SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
