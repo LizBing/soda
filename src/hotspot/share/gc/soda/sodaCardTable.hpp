@@ -24,12 +24,6 @@
 #ifndef SHARE_GC_SODA_SODACARDTABLE_HPP
 #define SHARE_GC_SODA_SODACARDTABLE_HPP
 
-#include "memory/allocation.hpp"
-
-class SodaCardTable : StackObj {
-public:
-  void initialize();
-};
 
 
 #endif // SHARE_GC_SODA_SODACARDTABLE_HPP

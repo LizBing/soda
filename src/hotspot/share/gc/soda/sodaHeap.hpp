@@ -34,6 +34,7 @@
 #include "gc/soda/sodaNMethod.hpp"
 #include "memory/virtualspace.hpp"
 #include "services/memoryManager.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 class WorkerThreads;
 
@@ -87,19 +88,24 @@ public:
   bool is_maximal_no_gc() const override { return used() == max_capacity(); }
 
   // Allocation
+  HeapWord* allocate_new_tlab(size_t ignore, size_t word_size,
+                               size_t* actual_size) override;
+
   HeapWord* mem_allocate(size_t word_size,
                          bool* gc_overhead_limit_was_exceeded) override;
 
-  HeapWord* alloc_humongous(size_t byte_size);
+  // size in bytes
+  HeapWord* alloc_humongous(size_t);
 
-  // disabled for now
   // TLAB allocation
-  size_t tlab_capacity(Thread* thr) const override {
-    return HeapWordSize;
+  size_t tlab_capacity(Thread* ignore) const override { return capacity(); }
+  size_t tlab_used(Thread* ignore) const override { return used(); }
+
+  size_t max_tlab_size() const override {
+    return align_down(min_humongous() / HeapWordSize, MinObjAlignment);
   }
-  size_t tlab_used(Thread* thr) const override {
-    return HeapWordSize;
-  }
+
+  size_t unsafe_max_tlab_alloc(Thread* ignore) const override;
 
   void collect(GCCause::Cause cause) override;
   void do_full_collection(bool clear_all_soft_refs) override;
@@ -165,7 +171,7 @@ public:
   intptr_t heap_start() { return _heap_start; }
   size_t capacity_in_lines() const { return SodaLinesPerHeapBlock * _capacity_in_blocks; }
   size_t capacity_in_blocks() const { return _capacity_in_blocks; }
-  size_t min_humongous() { return block_size() >> 1; }
+  size_t min_humongous() const { return block_size() >> 1; }
 
   WorkerThreads* par_workers() { return _par_workers; }
   WorkerThreads* conc_workers() { return _conc_workers; }

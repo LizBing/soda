@@ -32,14 +32,11 @@
 class SodaBumper : StackObj {
 public:
   SodaBumper() :
-    _empty(true),
     _top(0), _end(0) {}
 
   void fill(intptr_t start, intptr_t end) {
     _top = start;
     _end = end;
-
-    _empty = false;
   }
 
   void fill(MemRegion mr) {
@@ -47,17 +44,12 @@ public:
   }
 
 public:
-  bool empty() { return _empty; }
-  void set_empty() { _empty = true; }
-
   intptr_t top() { return _top; }
   intptr_t end() { return _end; }
   size_t remaining() { return _end - _top; }
 
 public:
   intptr_t bump(size_t size) {
-    assert(!_empty, "The bumper should be filled before bumping.");
-
     auto res = _top;
     intptr_t new_top = _top + size;
 
@@ -68,7 +60,6 @@ public:
   }
 
  intptr_t par_bump(size_t size) {
-    assert(!_empty, "The bumper should be filled before bumping.");
     intptr_t res = 0;
     intptr_t new_top = 0;
 
@@ -83,8 +74,6 @@ public:
   }
 
  private:
-  bool _empty;
-
   volatile intptr_t _top;
   intptr_t _end;
 };

@@ -24,6 +24,7 @@
 #ifndef SHARE_GC_SODA_SODAHEAPBLOCK_HPP
 #define SHARE_GC_SODA_SODAHEAPBLOCK_HPP
 
+#include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaGenEnum.hpp"
@@ -32,10 +33,12 @@
 #include "memory/memRegion.hpp"
 
 class SodaHeapBlockStack;
+class SodaObjAllocator;
 
 class SodaHeapBlock {
   friend class SodaHeapBlocks;
   friend class SodaGlobalAllocator;
+  friend class SodaObjAllocator;
 
 private:
   SodaHeapBlock();
@@ -45,11 +48,8 @@ public:
     return &n._next;
   }
 
-  void claim_occupied() {
-    for (uint i = 0; i < _blocks; ++i)
-      this[i]._free = false;
-  }
-  bool is_free() { return _free; }
+  void claim_occupied() { _free = false; }
+  bool is_free() { return _header->_free; }
 
   intptr_t start() { return _start; }
   int blocks() { return _blocks; }
@@ -74,24 +74,18 @@ public:
   SodaHeapBlock* cont_prev();
   SodaHeapBlock* cont_next();
 
-  void reset(bool init = false) {
-    if (init)
-      _free = true;
-    else
-      for (uintx i = 0; i < _blocks; ++i)
-        this[i]._free = true;
-
+  void reset() {
     _should_be_evacuate = false;
-
-    if (!init)
-      _discoverer.reset();
 
     _prev = nullptr;
     _next = nullptr;
+
+    _bumper.fill(_start, _start + SodaHeap::heap()->block_size());
   }
 
-  // forward
-  void clear_cards() { _discoverer.clear_cards(); }
+public:
+  intptr_t alloc(size_t s) { return _bumper.bump(s); }
+  intptr_t par_alloc(size_t s) { return _bumper.par_bump(s); }
 
 private:
   SodaHeapBlock* partition(int n);
@@ -99,9 +93,6 @@ private:
   void merge(SodaHeapBlock* cn);
 
   SodaHeapBlock* last();
-
-public:
-  MemRegion discover_one_recyclable(bool* succeeded);
 
 private:
   intptr_t _start;
@@ -111,8 +102,6 @@ private:
   bool _should_be_evacuate;
   int _gen;
 
-  SodaFreeLineDiscoverer _discoverer;
-
 private:
   SodaHeapBlockStack* _same_sized_group;
 
@@ -120,6 +109,9 @@ private:
   SodaHeapBlock* _next;
 
   SodaHeapBlock* _header;
+
+private:
+  SodaBumper _bumper;
 };
 
 #endif // SHARE_GC_SODA_SODAHEAPBLOCK_HPP

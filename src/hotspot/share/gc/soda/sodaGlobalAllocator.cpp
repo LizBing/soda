@@ -22,10 +22,10 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/soda/sodaAllocator.hpp"
+#include "gc/soda/sodaGlobalAllocator.hpp"
 #include "runtime/mutexLocker.hpp"
 
-int SodaGlobalAllocator::_num_free_blocks;
+uintx SodaGlobalAllocator::_num_free_blocks;
 SodaGlobalAllocator::AVL SodaGlobalAllocator::_avl;
 SodaHeapBlockStack SodaGlobalAllocator::_stack;
 SodaHeapBlockLFStack SodaGlobalAllocator::_lfs[SodaGenEnum::num_gens];
@@ -82,13 +82,14 @@ void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
   auto cp = hb->cont_prev();
   auto cn = hb->cont_next();
 
-  if (cn != nullptr && cn->is_free())
-    hb->merge(cn);
-
   if (cp != nullptr && cp->is_free()) {
     cp->merge(hb);
     hb = cp;
-  }
+  } else
+    hb->_free = true;
+
+  if (cn != nullptr && cn->is_free())
+    hb->merge(cn);
 
   _reclaim(hb);
 }

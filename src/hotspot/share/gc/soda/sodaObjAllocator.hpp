@@ -21,15 +21,29 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAGENENUM_HPP
-#define SHARE_GC_SODA_SODAGENENUM_HPP
+#ifndef SHARE_GC_SODA_SODAOBJALLOCATOR_HPP
+#define SHARE_GC_SODA_SODAOBJALLOCATOR_HPP
 
-struct SodaGenEnum {
-  enum {
-    young_gen,
-    // old_gen,
-    num_gens
-  };
+#include "memory/allStatic.hpp"
+#include "utilities/globalDefinitions.hpp"
+
+class SodaHeapBlock;
+
+class SodaObjAllocator : AllStatic {
+public:
+  static void initialize();
+
+  static intptr_t alloc(size_t);
+
+  static size_t undone();
+
+  // in bytes
+  static size_t unsafe_max_tlab_alloc();
+
+private:
+  static uintx _undone_hb;
+  static SodaHeapBlock** _shared_blocks;
 };
 
-#endif // SHARE_GC_SODA_SODAGENENUM_HPP
+
+#endif // SHARE_GC_SODA_SODAOBJALLOCATOR_HPP

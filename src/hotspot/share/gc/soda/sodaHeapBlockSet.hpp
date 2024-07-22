@@ -76,31 +76,30 @@ public:
 
 public:
   static void record_young(SodaHeapBlock* hb) {
-    record(&_young, hb, true);
+    record(&_young, hb);
   }
+/*
   static void record_old(SodaHeapBlock* hb) {
-    record(&_old, hb, true);
+    record(&_old, hb);
   }
+*/
   static void record_humongous(SodaHeapBlock* hb) {
-    record(&_humongous, hb, false);
+    record(&_humongous, hb);
   }
 
   static void pop_all_young(Closure* cl) { pop_all(&_young, cl); }
-  static void pop_all_old(Closure* cl) { pop_all(&_old, cl); }
+  // static void pop_all_old(Closure* cl) { pop_all(&_old, cl); }
   static void pop_all_humongous(Closure* cl) { pop_all(&_humongous, cl); }
 
   static void clear() {
     _young.pop_all();
-    _old.pop_all();
+    // _old.pop_all();
     _humongous.pop_all();
   }
 
 private:
   static void record(SodaHeapBlockLFStack* s,
-                     SodaHeapBlock* hb,
-                     bool clear_cards) {
-    if (clear_cards)
-      hb->clear_cards();
+                     SodaHeapBlock* hb) {
     s->push(*hb);
   }
 
@@ -114,7 +113,7 @@ private:
 
 private:
   static SodaHeapBlockLFStack _young;
-  static SodaHeapBlockLFStack _old;
+  // static SodaHeapBlockLFStack _old;
   static SodaHeapBlockLFStack _humongous;
 };
 

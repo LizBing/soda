@@ -25,18 +25,18 @@
 #define SHARE_GC_SODA_SODATHREADLOCALDATA_HPP
 
 #include "gc/shared/plab.hpp"
-#include "gc/soda/sodaTLAB.hpp"
 #include "gc/shared/gc_globals.hpp"
+#include "gc/soda/sodaRecyclingAllocator.hpp"
 #include "runtime/javaThread.hpp"
 #include "utilities/debug.hpp"
 
 class SodaThreadLocalData {
 private:
-  SodaTLAB _tlab;
+  SodaRecyclingAllocator _ra;
   PLAB* _gclab;
 
 private:
-  SodaThreadLocalData(): _tlab() {}
+  SodaThreadLocalData(): _ra() {}
 
   static SodaThreadLocalData* data(Thread* thread) {
     assert(UseSodaGC, "Sanity");
@@ -52,8 +52,8 @@ public:
     data(thread)->~SodaThreadLocalData();
   }
 
-  static SodaTLAB* tlab(Thread* thread) { return &data(thread)->_tlab; }
-  static PLAB* gclab(Thread* thread) { return data(thread)->_gclab; }
+  static SodaRecyclingAllocator* ra(Thread* thrd) { return &data(thrd)->_ra; }
+  static PLAB* gclab(Thread* thrd) { return data(thrd)->_gclab; }
 };
 
 #endif // SHARE_GC_SODA_SODATHREADLOCALDATA_HPP

@@ -43,8 +43,6 @@ void SodaArguments::initialize() {
   if (FLAG_IS_DEFAULT(ExitOnOutOfMemoryError)) {
     FLAG_SET_DEFAULT(ExitOnOutOfMemoryError, true);
   }
-
-  FLAG_SET_DEFAULT(UseTLAB, false);
 }
 
 void SodaArguments::initialize_alignments() {

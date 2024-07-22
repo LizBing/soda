@@ -22,31 +22,15 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/soda/sodaAllocator.hpp"
+#include "gc/soda/sodaGlobalAllocator.hpp"
 #include "gc/soda/sodaHeapBlock.inline.hpp"
-
-class RecycleClosure : public SodaFreeLineDiscoverer::Closure {
-public:
-  bool do_free_line(MemRegion mr) override {
-    _mr = mr;
-    return false;
-  }
-
-  MemRegion discovery() { return _mr; }
-
-private:
-  MemRegion _mr;
-};
-
 
 SodaHeapBlock::SodaHeapBlock() {
   auto heap = SodaHeap::heap();
 
   _start = intptr_t(heap->heap_start()) + heap->block_size() * index();
 
-  _discoverer.initialize(_start);
-
-  reset(true);
+  reset();
 }
 
 
@@ -61,6 +45,8 @@ SodaHeapBlock* SodaHeapBlock::partition(int n) {
   last()->_header = this;
   res->last()->_header = res;
 
+  res->_header = res;
+
   return res;
 }
 
@@ -71,13 +57,5 @@ void SodaHeapBlock::merge(SodaHeapBlock *cn) {
   cn->_same_sized_group->erase(cn);
 
   _blocks += cn->_blocks;
-  cn->last()->_header = this;
-}
-
-MemRegion SodaHeapBlock::discover_one_recyclable(bool* succeeded) {
-  RecycleClosure cl;
-
-  *succeeded = !_discoverer.discover(&cl);
-
-  return cl.discovery();
+  last()->_header = this;
 }

@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAALLOCATOR_HPP
-#define SHARE_GC_SODA_SODAALLOCATOR_HPP
+#ifndef SHARE_GC_SODA_SODAGLOBALALLOCATOR_HPP
+#define SHARE_GC_SODA_SODAGLOBALALLOCATOR_HPP
 
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaAVL.hpp"
@@ -105,7 +105,7 @@ class SodaGlobalAllocator : AllStatic {
   using AVL = SodaAVL<int, SodaHeapBlockStack*, cmp>;
 
 public:
-  static int num_free_blocks() { return _num_free_blocks; }
+  static uintx num_free_blocks() { return _num_free_blocks; }
 
 public:
   static void initialize() {
@@ -113,6 +113,10 @@ public:
     auto hb = SodaHeapBlocks::at(0);
     hb->_blocks = _num_free_blocks;
 
+    hb->_header = hb;
+    hb->last()->_header = hb;
+
+    hb->_free = true;
     _reclaim(hb);
   }
 
@@ -135,11 +139,11 @@ private:
   static void _reclaim(SodaHeapBlock* hb);
 
 private:
-  static int _num_free_blocks;
+  static uintx _num_free_blocks;
 
   static AVL _avl;
   static SodaHeapBlockStack _stack;   // for one-free-block allocation
   static SodaHeapBlockLFStack _lfs[SodaGenEnum::num_gens];
 };
 
-#endif // SHARE_GC_SODA_SODAALLOCATOR_HPP
+#endif // SHARE_GC_SODA_SODAGLOBALALLOCATOR_HPP

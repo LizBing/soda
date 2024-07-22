@@ -24,6 +24,7 @@
 #include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "gc/shared/workerThread.hpp"
+#include "gc/soda/sodaObjAllocator.hpp"
 #include "precompiled.hpp"
 #include "gc/shared/gcArguments.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
@@ -32,7 +33,7 @@
 #include "gc/soda/sodaInitLogger.hpp"
 #include "gc/soda/sodaMemoryPool.hpp"
 #include "gc/soda/sodaThreadLocalData.hpp"
-#include "gc/soda/sodaAllocator.hpp"
+#include "gc/soda/sodaGlobalAllocator.hpp"
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlockSet.hpp"
 #include "logging/log.hpp"
@@ -67,6 +68,7 @@ jint SodaHeap::initialize() {
     memset(_reserved.start(), 0, capacity());
 
   // Initialize facilities
+  SodaObjAllocator::initialize();
   SodaFreeLineTable::initialize();
   SodaHeapBlocks::initialize();
   SodaGlobalAllocator::initialize();
@@ -113,40 +115,35 @@ SodaHeap* SodaHeap::heap() {
   return named_heap<SodaHeap>(CollectedHeap::Soda);
 }
 
+HeapWord* SodaHeap::allocate_new_tlab(size_t ignore,
+                                      size_t word_size,
+                                      size_t *actual_size) {
+  size_t byte_size = word_size * HeapWordSize;
+  intptr_t mem = SodaObjAllocator::alloc(byte_size);
+
+  if (mem != 0) *actual_size = word_size;
+  return (HeapWord*)mem;
+}
+
 HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceeded) {
   *gc_overhead_limit_was_exceeded = false;
 
   auto s = size * HeapWordSize;
   if (s < min_humongous())
-    return (HeapWord*)SodaThreadLocalData::tlab(Thread::current())->
-           allocate(s);
+    return (HeapWord*)SodaObjAllocator::alloc(s);
 
   return alloc_humongous(s);
 }
 
-HeapWord* SodaHeap::alloc_humongous(size_t byte_size) {
-  bool trigger = false;
-  size_t size = byte_size;
-
-  if (!is_aligned(size, _block_size)) {
-    size += min_dummy_object_size() * HeapWordSize;
-    trigger = true;
-  }
-
+HeapWord* SodaHeap::alloc_humongous(size_t size) {
   int num_blocks = align_up(size, block_size()) / block_size();
 
   auto hb = SodaGlobalAllocator::allocate(num_blocks, SodaGenEnum::young_gen);
   if (hb == nullptr) return nullptr;
 
-  auto start = hb->start();
-
-  if (trigger)
-    fill_with_dummy_object(
-      (HeapWord*)(start + byte_size),
-      (HeapWord*)(start + _block_size * num_blocks), false);
-
   SodaBlockArchive::record_humongous(hb);
 
+  auto start = hb->start();
   return (HeapWord*)start;
 }
 
@@ -235,11 +232,14 @@ void SodaHeap::stop() {
 }
 
 bool SodaHeap::is_in(const void *p) const {
-  return is_in_reserved(p) ?
-         !SodaHeapBlocks::block_for((intptr_t)p)->is_free() : false;
+  return is_in_reserved(p);
 }
 
 void SodaHeap::gc_threads_do(ThreadClosure *tc) const {
   _par_workers->threads_do(tc);
   _conc_workers->threads_do(tc);
+}
+
+inline size_t SodaHeap::unsafe_max_tlab_alloc(Thread *ignore) const {
+  return SodaObjAllocator::unsafe_max_tlab_alloc();
 }

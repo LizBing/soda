@@ -95,7 +95,7 @@ private:
 };
 
 class SodaFreeLineDiscoverer : StackObj {
-  friend class SodaHeapBlock;
+  friend class SodaRecyclingAllocator;
 
 public:
   struct Closure : StackObj {
@@ -108,12 +108,10 @@ private:
     _begin = SodaFreeLineTable::card_for(block_start);
     _end = _begin + cards_per_block();
 
-    reset();
+    _iter = _begin;
   }
 
 public:
-  void reset() { _iter = _begin; }
-
   // returns the result of the closure
   bool discover(Closure*);
 

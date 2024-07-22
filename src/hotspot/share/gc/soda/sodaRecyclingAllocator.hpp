@@ -21,54 +21,35 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODATLAB_HPP
-#define SHARE_GC_SODA_SODATLAB_HPP
+#ifndef SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#define SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
 
 #include "gc/soda/sodaBumper.hpp"
-#include "gc/soda/sodaHeap.hpp"
+#include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
 #include "memory/allocation.hpp"
 
-class SodaTLAB : StackObj {
+class SodaRecyclingAllocator : StackObj {
 public:
-  SodaTLAB():
-    _reusing(false),
-    _small(nullptr),
-    _small_bumper(),
-    _medium_bumper() {}
+  SodaRecyclingAllocator():
+    _hb(nullptr), _bumper() {}
 
 public:
-  intptr_t allocate(size_t s) {
-    auto h = SodaHeap::heap();
-    assert(s < h->min_humongous(),
-           "humongous objects should not be allocated using TLAB.");
-
-    if (s < h->line_size())
-      return alloc_small(s);
-    return alloc_medium(s);
+  void retire() {
+    _hb = nullptr;
   }
 
-private:
-  bool refill_small();
-  bool refill_medium();
-  void refill_helper(SodaBumper* b) {
-    if (!b->empty() && b->remaining() > 0)
-      SodaHeap::heap()->fill_with_dummy_object(
-        (HeapWord*)b->top(),
-        (HeapWord*)b->end(), false);
-  }
-
-  intptr_t alloc_small(size_t);
-  intptr_t alloc_medium(size_t);
+  intptr_t allocate(size_t);
 
 private:
-  bool _reusing;
-  SodaHeapBlock* _small;
-  SodaBumper _small_bumper;
+  intptr_t alloc_slow(size_t);
+  bool fill();
 
-  SodaBumper _medium_bumper;
-
+private:
+  SodaHeapBlock* _hb;
+  SodaFreeLineDiscoverer _discoverer;
+  SodaBumper _bumper;
 };
 
 
-#endif // SHARE_GC_SODA_SODATLAB_HPP
+#endif // SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
