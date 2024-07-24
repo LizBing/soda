@@ -79,6 +79,7 @@ retry:
   }
 
   mem = tmp;
+  SodaGlobalAllocator::reclaim(new_hb);
   Atomic::inc(&_undone_hb);
 
   return mem;

@@ -98,8 +98,11 @@ public:
   HeapWord* alloc_humongous(size_t);
 
   // TLAB allocation
-  size_t tlab_capacity(Thread* ignore) const override { return capacity(); }
-  size_t tlab_used(Thread* ignore) const override { return used(); }
+  size_t tlab_capacity(Thread* ignore) const override {
+    // return capacity() / (NewRatio + 1); // generational
+    return capacity();
+  }
+  size_t tlab_used(Thread* ignore) const override;
 
   size_t max_tlab_size() const override {
     return align_down(min_humongous() / HeapWordSize, MinObjAlignment);
@@ -150,7 +153,7 @@ public:
   void print_tracing_info() const override;
   bool print_location(outputStream* st, void* addr) const override;
 
-  WorkerThreads * safepoint_workers() override { return _par_workers; }
+  WorkerThreads* safepoint_workers() override { return _par_workers; }
 
 private:
   void print_heap_info(size_t used) const;

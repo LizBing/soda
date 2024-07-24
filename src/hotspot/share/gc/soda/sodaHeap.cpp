@@ -24,6 +24,7 @@
 #include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "gc/shared/workerThread.hpp"
+#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaObjAllocator.hpp"
 #include "precompiled.hpp"
 #include "gc/shared/gcArguments.hpp"
@@ -242,4 +243,9 @@ void SodaHeap::gc_threads_do(ThreadClosure *tc) const {
 
 inline size_t SodaHeap::unsafe_max_tlab_alloc(Thread *ignore) const {
   return SodaObjAllocator::unsafe_max_tlab_alloc();
+}
+
+inline size_t SodaHeap::tlab_used(Thread *ignore) const {
+  return SodaGlobalAllocator::active_blocks(SodaGenEnum::young_gen) *
+         _block_size;
 }

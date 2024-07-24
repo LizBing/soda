@@ -22,6 +22,8 @@
  */
 
 #include "precompiled.hpp"
+
+#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaGlobalAllocator.hpp"
 #include "runtime/mutexLocker.hpp"
 
@@ -29,6 +31,7 @@ uintx SodaGlobalAllocator::_num_free_blocks;
 SodaGlobalAllocator::AVL SodaGlobalAllocator::_avl;
 SodaHeapBlockStack SodaGlobalAllocator::_stack;
 SodaHeapBlockLFStack SodaGlobalAllocator::_lfs[SodaGenEnum::num_gens];
+uintx SodaGlobalAllocator::_active_blocks[SodaGenEnum::num_gens];
 
 SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
   SodaHeapBlock* src = nullptr;
@@ -69,6 +72,7 @@ SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
 ret: // record and quit
   hb->_gen = gen;
   _num_free_blocks -= num_blocks;
+  _active_blocks[gen] += num_blocks;
 
   return hb;
 }
@@ -78,6 +82,7 @@ void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
 
   MutexLocker ml(Heap_lock);
   _num_free_blocks += hb->blocks();
+  _active_blocks[hb->gen()] -= hb->blocks();
 
   auto cp = hb->cont_prev();
   auto cn = hb->cont_next();

@@ -21,9 +21,22 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODACARDTABLE_HPP
-#define SHARE_GC_SODA_SODACARDTABLE_HPP
+#ifndef SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP
+#define SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP
+
+#include "gc/shared/gcTimer.hpp"
+#include "memory/allocation.hpp"
+
+class SodaHeap;
+
+class SodaImmixCollector : StackObj {
+public:
+  SodaImmixCollector();
+
+private:
+  SodaHeap* _heap;
+  GCTimer _timer;
+};
 
 
-
-#endif // SHARE_GC_SODA_SODACARDTABLE_HPP
+#endif // SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP

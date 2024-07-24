@@ -107,6 +107,8 @@ class SodaGlobalAllocator : AllStatic {
 public:
   static uintx num_free_blocks() { return _num_free_blocks; }
 
+  static uintx active_blocks(int gen) { return _active_blocks[gen]; }
+
 public:
   static void initialize() {
     _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
@@ -140,6 +142,7 @@ private:
 
 private:
   static uintx _num_free_blocks;
+  static uintx _active_blocks[SodaGenEnum::num_gens];
 
   static AVL _avl;
   static SodaHeapBlockStack _stack;   // for one-free-block allocation

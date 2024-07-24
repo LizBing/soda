@@ -38,11 +38,6 @@ void SodaArguments::initialize() {
   GCArguments::initialize();
 
   assert(UseSodaGC, "Sanity");
-
-  // Forcefully exit when OOME is detected. Nothing we can do at that point.
-  if (FLAG_IS_DEFAULT(ExitOnOutOfMemoryError)) {
-    FLAG_SET_DEFAULT(ExitOnOutOfMemoryError, true);
-  }
 }
 
 void SodaArguments::initialize_alignments() {

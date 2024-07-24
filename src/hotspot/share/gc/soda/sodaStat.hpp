@@ -21,10 +21,11 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAMARKPHASE_HPP
-#define SHARE_GC_SODA_SODAMARKPHASE_HPP
+#ifndef SHARE_GC_SODA_SODASTAT_HPP
+#define SHARE_GC_SODA_SODASTAT_HPP
 
-class SodaYoungCMPhase {};
+#include "memory/allocation.hpp"
 
 
-#endif // SHARE_GC_SODA_SODAMARKPHASE_HPP
+
+#endif // SHARE_GC_SODA_SODASTAT_HPP
