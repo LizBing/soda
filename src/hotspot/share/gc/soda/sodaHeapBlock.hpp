@@ -36,8 +36,9 @@ class SodaHeapBlockStack;
 class SodaObjAllocator;
 
 class SodaHeapBlock {
-  friend class SodaHeapBlocks;
   friend class SodaGlobalAllocator;
+  friend class SodaHeapBlocks;
+  friend class SodaHeapBlockStack;
   friend class SodaObjAllocator;
 
 private:
@@ -76,10 +77,9 @@ public:
 
   void reset() {
     _should_be_evacuate = false;
+  }
 
-    _prev = nullptr;
-    _next = nullptr;
-
+  void fill_bumper() {
     _bumper.fill(_start, _start + SodaHeap::heap()->block_size());
   }
 

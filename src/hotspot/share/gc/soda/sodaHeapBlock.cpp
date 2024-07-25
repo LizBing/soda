@@ -25,11 +25,14 @@
 #include "gc/soda/sodaGlobalAllocator.hpp"
 #include "gc/soda/sodaHeapBlock.inline.hpp"
 
-SodaHeapBlock::SodaHeapBlock() {
+SodaHeapBlock::SodaHeapBlock():
+  _same_sized_group(nullptr),
+  _prev(nullptr),
+  _next(nullptr)
+{
   auto heap = SodaHeap::heap();
 
-  _start = intptr_t(heap->heap_start()) + heap->block_size() * index();
-
+  _start = heap->heap_start() + heap->block_size() * index();
   reset();
 }
 
@@ -43,8 +46,8 @@ SodaHeapBlock* SodaHeapBlock::partition(int n) {
   res->_blocks = n;
 
   last()->_header = this;
-  res->last()->_header = res;
 
+  res->last()->_header = res;
   res->_header = res;
 
   return res;
@@ -53,8 +56,6 @@ SodaHeapBlock* SodaHeapBlock::partition(int n) {
 void SodaHeapBlock::merge(SodaHeapBlock *cn) {
   assert(index() + _blocks == cn->index(),
          "should be an upper and contiguous region");
-
-  cn->_same_sized_group->erase(cn);
 
   _blocks += cn->_blocks;
   last()->_header = this;

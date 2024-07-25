@@ -42,20 +42,29 @@ public:
   SodaHeapBlockStack()
   : _size(0), _head(nullptr) {}
 
+  ~SodaHeapBlockStack() {
+    assert(_size == 0, "should be 0");
+  }
+
 public:
   size_t size() { return _size; }
 
 public:
   void push(SodaHeapBlock* hb) {
-    ++_size;
+    assert(hb->_same_sized_group == nullptr, "should be null");
 
-    hb->set_same_sized_group(this);
+    assert(hb->prev() == nullptr, "should be null");
+    assert(hb->next() == nullptr, "should be null");
 
     hb->set_next(_head);
+
     if (_head != nullptr)
       _head->set_prev(hb);
 
     _head = hb;
+
+    _size += 1;
+    hb->set_same_sized_group(this);
   }
 
   SodaHeapBlock* pop() {
@@ -63,19 +72,26 @@ public:
     if (hb == nullptr)
       return nullptr;
 
-    --_size;
+    assert(_size > 0, "pop: should be greater than 0");
 
-    auto next = hb->next();
+    auto next = _head->next();
     if (next != nullptr)
       next->set_prev(nullptr);
 
     _head = next;
+    _size -= 1;
+
+    hb->set_same_sized_group(nullptr);
+    hb->set_prev(nullptr);
+    hb->set_next(nullptr);
+
     return hb;
   }
 
   // call when about to merge
   void erase(SodaHeapBlock* hb) {
-    --_size;
+    assert(_size > 0, "erase: should be greater than 0");
+    assert(hb->_same_sized_group == this, "different ssg");
 
     auto prev = hb->prev();
     auto next = hb->next();
@@ -85,9 +101,14 @@ public:
       return;
     }
 
+    _size -= 1;
     if (next != nullptr)
       next->set_prev(prev);
     prev->set_next(next);
+
+    hb->set_same_sized_group(nullptr);
+    hb->set_prev(nullptr);
+    hb->set_next(nullptr);
   }
 
 private:
@@ -110,17 +131,7 @@ public:
   static uintx active_blocks(int gen) { return _active_blocks[gen]; }
 
 public:
-  static void initialize() {
-    _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
-    auto hb = SodaHeapBlocks::at(0);
-    hb->_blocks = _num_free_blocks;
-
-    hb->_header = hb;
-    hb->last()->_header = hb;
-
-    hb->_free = true;
-    _reclaim(hb);
-  }
+  static void initialize();
 
   static SodaHeapBlock* allocate(int num_blocks, int gen);
   static void reclaim(SodaHeapBlock* hb);

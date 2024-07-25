@@ -33,44 +33,59 @@ SodaHeapBlockStack SodaGlobalAllocator::_stack;
 SodaHeapBlockLFStack SodaGlobalAllocator::_lfs[SodaGenEnum::num_gens];
 uintx SodaGlobalAllocator::_active_blocks[SodaGenEnum::num_gens];
 
+void SodaGlobalAllocator::initialize() {
+  _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
+
+  auto hb = SodaHeapBlocks::at(0);
+  hb->_blocks = _num_free_blocks;
+
+  hb->_header = hb;
+  hb->last()->_header = hb;
+
+  hb->_free = true;
+  _reclaim(hb);
+}
+
 SodaHeapBlock* SodaGlobalAllocator::allocate(int num_blocks, int gen) {
   SodaHeapBlock* src = nullptr;
+  SodaHeapBlock* hb = nullptr;
   AVL::Node* n = nullptr;
 
   MutexLocker ml(Heap_lock);
 
-  SodaHeapBlock* hb = nullptr;
   if (num_blocks == 1) {
     hb = _stack.pop();
-    if (hb != nullptr) goto ret;
+    if (hb != nullptr)
+      goto ret;
   }
 
-  // get source block & prune
   for (;;) {
     n = _avl.find_equal_or_successor(num_blocks);
-    if (n == nullptr) return nullptr;
+    if (n == nullptr)
+      return nullptr;
 
     auto ssg = n->get_value();
     src = ssg->pop();
-    if (ssg->size() == 0)
-      // abandoned 0 sized same sized group
-      // maybe we should reserve some common SSGs for further maintainance
+    if (ssg->size() == 0) {
       _avl.erase(n->key());
+      delete ssg;
+    }
 
-    if (src != nullptr) break;
+    if (src != nullptr)
+      break;;
   }
 
-  // process source block
-  if (num_blocks < n->key()) {
+  if (num_blocks == src->blocks())
+    hb = src;
+  else {
     hb = src->partition(num_blocks);
     _reclaim(src);
-  } else
-    hb = src;
+  }
 
+ret:
   hb->claim_occupied();
-
-ret: // record and quit
   hb->_gen = gen;
+
   _num_free_blocks -= num_blocks;
   _active_blocks[gen] += num_blocks;
 
@@ -78,6 +93,8 @@ ret: // record and quit
 }
 
 void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
+  assert(!hb->is_free(), "should not be reclaimed twice");
+
   hb->reset();
 
   MutexLocker ml(Heap_lock);
@@ -88,29 +105,35 @@ void SodaGlobalAllocator::reclaim(SodaHeapBlock *hb) {
   auto cn = hb->cont_next();
 
   if (cp != nullptr && cp->is_free()) {
+    cp->_same_sized_group->erase(cp);
     cp->merge(hb);
     hb = cp;
   } else
     hb->_free = true;
 
-  if (cn != nullptr && cn->is_free())
+  if (cn != nullptr && cn->is_free()) {
+    cn->_same_sized_group->erase(cn);
     hb->merge(cn);
+  }
 
   _reclaim(hb);
 }
 
 void SodaGlobalAllocator::_reclaim(SodaHeapBlock* hb) {
-  if (hb->blocks() == 1) {
-    _stack.push(hb);
-    return;
+  assert(hb->is_free(), "should be free");
+
+  SodaHeapBlockStack* ssg = nullptr;
+
+  if (hb->blocks() == 1)
+    ssg = &_stack;
+  else {
+    auto n = _avl.find(hb->blocks());
+    if (n == nullptr) {
+      ssg = new SodaHeapBlockStack();
+      _avl.insert(hb->blocks(), ssg);
+    } else
+      ssg = n->get_value();
   }
 
-  auto n = _avl.find(hb->blocks());
-  if (n != nullptr)
-    n->get_value()->push(hb);
-  else {
-    auto ssg = new SodaHeapBlockStack;
-    ssg->push(hb);
-    _avl.insert(hb->blocks(), ssg);
-  }
+  ssg->push(hb);
 }

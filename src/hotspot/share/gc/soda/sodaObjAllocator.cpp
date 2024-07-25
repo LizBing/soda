@@ -57,32 +57,30 @@ intptr_t SodaObjAllocator::alloc(size_t size) {
   auto new_hb = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
   if (new_hb == nullptr) return 0;
 
+  new_hb->fill_bumper();
   mem = new_hb->alloc(size);
 
   // try to install the new heap block
+  SodaHeapBlock* prev_hb = nullptr;
+  intptr_t tmp = 0;
 retry:
-  auto prev_hb = Atomic::cmpxchg(shared, hb, new_hb);
-  if (prev_hb == nullptr) {
-    hb = nullptr;
-    goto retry;
-  }
-
+  prev_hb = Atomic::cmpxchg(shared, hb, new_hb);
   if (prev_hb == hb) {  // success, return
-    SodaBlockArchive::record_young(hb);
+    if (hb != nullptr)
+      SodaBlockArchive::record_young(hb);
     return mem;
   }
 
-  auto tmp = prev_hb->par_alloc(size);
+  tmp = prev_hb->par_alloc(size);
   if (tmp == 0) {
     hb = prev_hb;
     goto retry;
   }
 
-  mem = tmp;
   SodaGlobalAllocator::reclaim(new_hb);
   Atomic::inc(&_undone_hb);
 
-  return mem;
+  return tmp;
 }
 
 inline size_t SodaObjAllocator::undone() {

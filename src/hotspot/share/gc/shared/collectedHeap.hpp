@@ -90,6 +90,7 @@ public:
 //   ParallelScavengeHeap
 //   ShenandoahHeap
 //   ZCollectedHeap
+//   SodaHeap
 //
 class CollectedHeap : public CHeapObj<mtGC> {
   friend class VMStructs;
