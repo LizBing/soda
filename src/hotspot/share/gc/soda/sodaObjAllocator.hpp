@@ -40,6 +40,8 @@ public:
   // in bytes
   static size_t unsafe_max_tlab_alloc();
 
+  static void retire_blocks();
+
 private:
   static uintx _undone_hb;
   static SodaHeapBlock** _shared_blocks;

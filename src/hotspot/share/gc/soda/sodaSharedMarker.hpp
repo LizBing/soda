@@ -21,40 +21,40 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
-#define SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#ifndef SHARE_GC_SODA_SODASHAREDMARKER_HPP
+#define SHARE_GC_SODA_SODASHAREDMARKER_HPP
 
-#include "gc/soda/sodaBumper.hpp"
-#include "gc/soda/sodaFreeLineTable.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
-#include "gc/soda/sodaHeapBlockSet.hpp"
-#include "memory/allocation.hpp"
+#include "gc/shared/markBitMap.hpp"
+#include "gc/shared/taskqueue.inline.hpp"
+#include "memory/allocation.inline.hpp"
+#include "memory/allStatic.hpp"
 
-class SodaRecyclingAllocator : StackObj {
+class SodaHeap;
+class ReferenceProcessor;
+class TaskTerminator;
+
+class SodaSharedMarker : AllStatic {
 public:
-  SodaRecyclingAllocator():
-    _hb(nullptr), _bumper() {}
+  class Manager : public CHeapObj<mtGC> {
+  public:
+    ;
+
+  private:
+    OverflowTaskQueue<oop, mtGC> _oop_stack;
+    OverflowTaskQueue<ObjArrayTask, mtGC, 1 << NOT_LP64(12) LP64_ONLY(13)>
+    _oopArray_stack;
+  };
 
 public:
-  void retire() {
-    if (_hb != nullptr) {
-      _discoverer.clear_cards();
-      SodaBlockArchive::record_young(_hb);
-      _hb = nullptr;
-    }
-  }
+  static void initialize();
 
-  intptr_t allocate(size_t);
+  // should be called inside a STW VM operation
+  static void prepare_for_marking(bool compact_gc);
 
 private:
-  intptr_t alloc_slow(size_t);
-  bool fill();
-
-private:
-  SodaHeapBlock* _hb;
-  SodaFreeLineDiscoverer _discoverer;
-  SodaBumper _bumper;
+  static MarkBitMap _mbm;
+  static SodaHeap* _heap;
 };
 
 
-#endif // SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#endif // SHARE_GC_SODA_SODASHAREDMARKER_HPP

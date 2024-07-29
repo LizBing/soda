@@ -21,40 +21,6 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
-#define SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#include "precompiled.hpp"
 
-#include "gc/soda/sodaBumper.hpp"
-#include "gc/soda/sodaFreeLineTable.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
-#include "gc/soda/sodaHeapBlockSet.hpp"
-#include "memory/allocation.hpp"
-
-class SodaRecyclingAllocator : StackObj {
-public:
-  SodaRecyclingAllocator():
-    _hb(nullptr), _bumper() {}
-
-public:
-  void retire() {
-    if (_hb != nullptr) {
-      _discoverer.clear_cards();
-      SodaBlockArchive::record_young(_hb);
-      _hb = nullptr;
-    }
-  }
-
-  intptr_t allocate(size_t);
-
-private:
-  intptr_t alloc_slow(size_t);
-  bool fill();
-
-private:
-  SodaHeapBlock* _hb;
-  SodaFreeLineDiscoverer _discoverer;
-  SodaBumper _bumper;
-};
-
-
-#endif // SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#include "gc/soda/sodaParCompact.hpp"

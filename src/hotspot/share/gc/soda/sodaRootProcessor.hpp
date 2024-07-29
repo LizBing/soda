@@ -21,40 +21,31 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
-#define SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#ifndef SHARE_GC_SODA_SODAROOTPROCESSOR_HPP
+#define SHARE_GC_SODA_SODAROOTPROCESSOR_HPP
 
-#include "gc/soda/sodaBumper.hpp"
-#include "gc/soda/sodaFreeLineTable.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
-#include "gc/soda/sodaHeapBlockSet.hpp"
-#include "memory/allocation.hpp"
+#include "gc/shared/workerThread.hpp"
+#include "memory/allStatic.hpp"
+#include "memory/iterator.inline.hpp"
 
-class SodaRecyclingAllocator : StackObj {
+struct SodaRootClosure {
+  // Closures to process raw oops in the root set.
+  virtual OopClosure* strong_oops() = 0;
+
+  // Closures to process CLDs in the root set.
+  virtual CLDClosure* weak_clds() = 0;
+  virtual CLDClosure* strong_clds() = 0;
+
+  // Applied to code blobs reachable as strong roots.
+  virtual CodeBlobClosure* strong_codeblobs() = 0;
+};
+
+class SodaRootProcessor : AllStatic {
 public:
-  SodaRecyclingAllocator():
-    _hb(nullptr), _bumper() {}
-
-public:
-  void retire() {
-    if (_hb != nullptr) {
-      _discoverer.clear_cards();
-      SodaBlockArchive::record_young(_hb);
-      _hb = nullptr;
-    }
-  }
-
-  intptr_t allocate(size_t);
+  void process(WorkerThreads*, SodaRootClosure*);
 
 private:
-  intptr_t alloc_slow(size_t);
-  bool fill();
-
-private:
-  SodaHeapBlock* _hb;
-  SodaFreeLineDiscoverer _discoverer;
-  SodaBumper _bumper;
 };
 
 
-#endif // SHARE_GC_SODA_SODARECYCLINGALLOCATOR_HPP
+#endif // SHARE_GC_SODA_SODAROOTPROCESSOR_HPP

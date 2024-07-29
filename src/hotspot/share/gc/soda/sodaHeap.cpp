@@ -21,12 +21,13 @@
  *
  */
 
+#include "precompiled.hpp"
+
 #include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "gc/shared/workerThread.hpp"
 #include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaObjAllocator.hpp"
-#include "precompiled.hpp"
 #include "gc/shared/gcArguments.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
 #include "gc/shared/locationPrinter.inline.hpp"
@@ -45,6 +46,7 @@
 #include "memory/universe.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
+#include "runtime/threadSMR.inline.hpp"
 
 SodaHeap::SodaHeap():
   _memory_manager("Soda Heap") {
@@ -248,4 +250,16 @@ inline size_t SodaHeap::unsafe_max_tlab_alloc(Thread *ignore) const {
 inline size_t SodaHeap::tlab_used(Thread *ignore) const {
   return SodaGlobalAllocator::active_blocks(SodaGenEnum::young_gen) *
          _block_size;
+}
+
+void SodaHeap::ensure_parsability(bool retire_tlabs) {
+  CollectedHeap::ensure_parsability(retire_tlabs);
+
+  if (retire_tlabs) {
+    for (JavaThreadIteratorWithHandle jtiwh; JavaThread *thread = jtiwh.next();) {
+      SodaThreadLocalData::ra(thread)->retire();
+    }
+
+    SodaObjAllocator::retire_blocks();
+  }
 }

@@ -95,4 +95,8 @@ size_t SodaObjAllocator::unsafe_max_tlab_alloc() {
                               SodaHeap::heap()->max_tlab_size() * HeapWordSize);
 }
 
-
+void SodaObjAllocator::retire_blocks() {
+  for (int i = 0; i < os::processor_count(); ++i) {
+    SodaBlockArchive::record_young(_shared_blocks[i]);
+  }
+}

@@ -21,22 +21,30 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP
-#define SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP
+#include "precompiled.hpp"
 
-#include "gc/shared/gcTimer.hpp"
+#include "gc/shared/taskTerminator.hpp"
+#include "gc/soda/sodaHeap.hpp"
+#include "gc/soda/sodaSharedMarker.hpp"
 #include "memory/allocation.hpp"
+#include "memory/memRegion.hpp"
 
-class SodaHeap;
+MarkBitMap SodaSharedMarker::_mbm;
+SodaHeap* SodaSharedMarker::_heap;
 
-class SodaImmixCollector : StackObj {
-public:
-  SodaImmixCollector();
+void SodaSharedMarker::initialize() {
+  _heap = SodaHeap::heap();
 
-private:
-  SodaHeap* _heap;
-  GCTimer _timer;
-};
+  size_t word_size = MarkBitMap::compute_size(_heap->max_capacity()) /
+                     HeapWordSize;
+  auto mem = NEW_C_HEAP_ARRAY(HeapWord, word_size, mtGC);
+  MemRegion storage(mem, word_size);
 
+  _mbm.initialize(_heap->reserved_region(), storage);
+}
 
-#endif // SHARE_GC_SODA_SODAIMMIXCOLLECTOR_HPP
+void SodaSharedMarker::prepare_for_marking(bool compact_gc) {
+  assert_at_safepoint();
+
+  _heap->ensure_parsability(compact_gc);
+}

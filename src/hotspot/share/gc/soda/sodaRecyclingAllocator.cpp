@@ -57,8 +57,7 @@ intptr_t SodaRecyclingAllocator::alloc_slow(size_t s) {
     if (fill()) return _bumper.bump(s);
 
     // about to get another recyclable heap block
-    _discoverer.clear_cards();
-    SodaBlockArchive::record_young(_hb);
+    retire();
   }
 
   _hb = SodaGlobalAllocator::alloc_reusing(SodaGenEnum::young_gen);

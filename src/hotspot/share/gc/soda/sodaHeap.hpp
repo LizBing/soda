@@ -155,6 +155,8 @@ public:
 
   WorkerThreads* safepoint_workers() override { return _par_workers; }
 
+  void ensure_parsability(bool retire_tlabs) override;
+
 private:
   void print_heap_info(size_t used) const;
   void print_metaspace_info() const;
@@ -185,6 +187,7 @@ public:
 private:
   WorkerThreads* _par_workers;
   WorkerThreads* _conc_workers;
+
 };
 
 #endif // SHARE_GC_SODA_SODAHEAP_HPP
