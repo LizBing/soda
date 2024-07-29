@@ -24,7 +24,6 @@
 #include "precompiled.hpp"
 
 #include "gc/soda/sodaFreeLineTable.hpp"
-#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaGlobalAllocator.hpp"
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaHeapBlock.inline.hpp"
@@ -54,7 +53,7 @@ intptr_t SodaObjAllocator::alloc(size_t size) {
     if (mem != 0) return mem;
   }
 
-  auto new_hb = SodaGlobalAllocator::allocate(1, SodaGenEnum::young_gen);
+  auto new_hb = SodaGlobalAllocator::allocate(1);
   if (new_hb == nullptr) return 0;
 
   new_hb->fill_bumper();
@@ -67,7 +66,7 @@ retry:
   prev_hb = Atomic::cmpxchg(shared, hb, new_hb);
   if (prev_hb == hb) {  // success, return
     if (hb != nullptr)
-      SodaBlockArchive::record_young(hb);
+      SodaBlockArchive::record_normal(hb);
     return mem;
   }
 
@@ -97,6 +96,6 @@ size_t SodaObjAllocator::unsafe_max_tlab_alloc() {
 
 void SodaObjAllocator::retire_blocks() {
   for (int i = 0; i < os::processor_count(); ++i) {
-    SodaBlockArchive::record_young(_shared_blocks[i]);
+    SodaBlockArchive::record_normal(_shared_blocks[i]);
   }
 }

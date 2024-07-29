@@ -25,8 +25,9 @@
 #define SHARE_GC_SODA_SODAINITLOGGER_HPP
 
 #include "gc/shared/gcInitLogger.hpp"
+#include "gc/parallel/parallelInitLogger.hpp"
 
-class SodaInitLogger : public GCInitLogger {
+class SodaInitLogger : public ParallelInitLogger {
 protected:
   virtual void print_gc_specific();
 

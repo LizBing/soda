@@ -24,11 +24,9 @@
 #ifndef SHARE_GC_SODA_SODAARGUMENTS_HPP
 #define SHARE_GC_SODA_SODAARGUMENTS_HPP
 
-#include "gc/shared/gcArguments.hpp"
+#include "gc/parallel/parallelArguments.hpp"
 
-class CollectedHeap;
-
-class SodaArguments : public GCArguments {
+class SodaArguments : public ParallelArguments {
 private:
   virtual void initialize_alignments();
 

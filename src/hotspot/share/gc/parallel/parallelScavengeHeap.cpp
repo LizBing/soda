@@ -77,7 +77,9 @@ jint ParallelScavengeHeap::initialize() {
   PSCardTable* card_table = new PSCardTable(heap_rs.region());
   card_table->initialize(old_rs.base(), young_rs.base());
 
-  CardTableBarrierSet* const barrier_set = new CardTableBarrierSet(card_table);
+  CardTableBarrierSet* barrier_set = UseSodaGC ?
+                                     new SodaBarrierSet(card_table) :
+                                     new CardTableBarrierSet(card_table);
   barrier_set->initialize();
   BarrierSet::set_barrier_set(barrier_set);
 
@@ -127,7 +129,8 @@ jint ParallelScavengeHeap::initialize() {
     return JNI_ENOMEM;
   }
 
-  ParallelInitLogger::print();
+  if (!UseSodaGC)
+    ParallelInitLogger::print();
 
   return JNI_OK;
 }

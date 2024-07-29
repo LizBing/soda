@@ -31,6 +31,8 @@
 class CollectedHeap;
 
 class ParallelArguments : public GenArguments {
+  friend class SodaArguments;
+
 private:
   virtual void initialize_alignments();
   virtual void initialize_heap_flags_and_sizes();

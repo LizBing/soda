@@ -39,7 +39,7 @@ public:
   void retire() {
     if (_hb != nullptr) {
       _discoverer.clear_cards();
-      SodaBlockArchive::record_young(_hb);
+      SodaBlockArchive::record_normal(_hb);
       _hb = nullptr;
     }
   }

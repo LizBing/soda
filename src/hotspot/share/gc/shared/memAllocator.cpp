@@ -42,11 +42,6 @@
 #include "utilities/align.hpp"
 #include "utilities/copy.hpp"
 
-#if INCLUDE_SODAGC
-#include "gc/soda/sodaHeap.hpp"
-#include "gc/soda/sodaThreadLocalData.hpp"
-#endif
-
 class MemAllocator::Allocation: StackObj {
   friend class MemAllocator;
 
@@ -355,17 +350,6 @@ HeapWord* MemAllocator::mem_allocate_slow(Allocation& allocation) const {
 
 HeapWord* MemAllocator::mem_allocate(Allocation& allocation) const {
   HeapWord* mem = nullptr;
-
-#if INCLUDE_SODAGC
-  if (UseSodaGC) {
-    size_t byte_size = _word_size * HeapWordSize;
-    if (byte_size <= SodaHeap::heap()->line_size()) {
-      mem = (HeapWord*)SodaThreadLocalData::ra(Thread::current())
-                       ->allocate(byte_size);
-      if (mem != nullptr) return mem;
-    }
-  }
-#endif
 
   if (UseTLAB) {
     // Try allocating from an existing TLAB.

@@ -27,7 +27,6 @@
 
 SodaHeapBlock* SodaHeapBlocks::_blocks;
 
-SodaHeapBlockLFStack SodaBlockArchive::_young;
-// SodaHeapBlockLFStack SodaBlockArchive::_old;
+SodaHeapBlockLFStack SodaBlockArchive::_normal;
 SodaHeapBlockLFStack SodaBlockArchive::_humongous;
 

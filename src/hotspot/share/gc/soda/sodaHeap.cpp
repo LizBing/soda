@@ -25,8 +25,8 @@
 
 #include "gc/shared/gcThreadLocalData.hpp"
 #include "gc/shared/gc_globals.hpp"
+#include "gc/shared/genArguments.hpp"
 #include "gc/shared/workerThread.hpp"
-#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaObjAllocator.hpp"
 #include "gc/shared/gcArguments.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
@@ -48,27 +48,17 @@
 #include "runtime/globals.hpp"
 #include "runtime/threadSMR.inline.hpp"
 
-SodaHeap::SodaHeap():
-  _memory_manager("Soda Heap") {
-  assert(sizeof(GCThreadLocalData) >= sizeof(SodaThreadLocalData), "Sanity.");
+SodaHeap::SodaHeap() {
+  // assert(sizeof(GCThreadLocalData) >= sizeof(SodaThreadLocalData), "Sanity.");
 }
 
 jint SodaHeap::initialize() {
-  size_t align = HeapAlignment;
-  size_t hsize = align_up(MaxHeapSize, align);
+  ParallelScavengeHeap::initialize();
 
   _line_size = DEFAULT_CACHE_LINE_SIZE * SodaCacheLinesPerBlockLine;
   _block_size = _line_size * SodaLinesPerHeapBlock;
-  _capacity_in_blocks  = hsize / _block_size;
-
-  // Initialize backing storage
-  ReservedHeapSpace heap_rs = Universe::reserve_heap(hsize, align);
-  _virtual_space.initialize(heap_rs, hsize);
-
-  initialize_reserved_region(heap_rs);
+  _capacity_in_blocks = align_down(MaxOldSize, _block_size) / _block_size;
   _heap_start = (intptr_t)_reserved.start();
-  if (ZapUnusedHeapArea)
-    memset(_reserved.start(), 0, capacity());
 
   // Initialize facilities
   SodaObjAllocator::initialize();
@@ -76,13 +66,6 @@ jint SodaHeap::initialize() {
   SodaHeapBlocks::initialize();
   SodaGlobalAllocator::initialize();
 
-  // Enable monitoring
-  _monitoring_support = new SodaMonitoringSupport(this);
-
-  // Install barrier set
-  BarrierSet::set_barrier_set(new SodaBarrierSet());
-
-  _par_workers = new WorkerThreads("Soda Parallel Worker", ParallelGCThreads);
   _conc_workers = new WorkerThreads("Soda Concurrent Worker", ConcGCThreads);
 
   // All done, print out the configuration
@@ -92,56 +75,37 @@ jint SodaHeap::initialize() {
 }
 
 void SodaHeap::post_initialize() {
-  CollectedHeap::post_initialize();
-
-  SodaNMethodTable::initialize();
+  ParallelScavengeHeap::post_initialize();
 }
 
 void SodaHeap::initialize_serviceability() {
-  _pool = new SodaMemoryPool(this);
-  _memory_manager.add_pool(_pool);
-}
-
-GrowableArray<GCMemoryManager*> SodaHeap::memory_managers() {
-  GrowableArray<GCMemoryManager*> memory_managers(1);
-  memory_managers.append(&_memory_manager);
-  return memory_managers;
-}
-
-GrowableArray<MemoryPool*> SodaHeap::memory_pools() {
-  GrowableArray<MemoryPool*> memory_pools(1);
-  memory_pools.append(_pool);
-  return memory_pools;
+  ParallelScavengeHeap::initialize_serviceability();
 }
 
 SodaHeap* SodaHeap::heap() {
   return named_heap<SodaHeap>(CollectedHeap::Soda);
 }
 
-HeapWord* SodaHeap::allocate_new_tlab(size_t ignore,
-                                      size_t word_size,
-                                      size_t *actual_size) {
-  size_t byte_size = word_size * HeapWordSize;
-  intptr_t mem = SodaObjAllocator::alloc(byte_size);
-
-  if (mem != 0) *actual_size = word_size;
-  return (HeapWord*)mem;
-}
-
 HeapWord* SodaHeap::mem_allocate(size_t size, bool *gc_overhead_limit_was_exceeded) {
-  *gc_overhead_limit_was_exceeded = false;
-
   auto s = size * HeapWordSize;
-  if (s < min_humongous())
-    return (HeapWord*)SodaObjAllocator::alloc(s);
-
-  return alloc_humongous(s);
+  HeapWord* res = nullptr;
+/*
+  if (s >= min_humongous()) {
+    res = alloc_humongous(s);
+    if (res != nullptr) {
+      *gc_overhead_limit_was_exceeded = false;
+      return res;
+    }
+  }
+*/
+  return ParallelScavengeHeap::mem_allocate(size,
+                                            gc_overhead_limit_was_exceeded);
 }
 
 HeapWord* SodaHeap::alloc_humongous(size_t size) {
   int num_blocks = align_up(size, block_size()) / block_size();
 
-  auto hb = SodaGlobalAllocator::allocate(num_blocks, SodaGenEnum::young_gen);
+  auto hb = SodaGlobalAllocator::allocate(num_blocks);
   if (hb == nullptr) return nullptr;
 
   SodaBlockArchive::record_humongous(hb);
@@ -150,42 +114,9 @@ HeapWord* SodaHeap::alloc_humongous(size_t size) {
   return (HeapWord*)start;
 }
 
-void SodaHeap::collect(GCCause::Cause cause) {
-  switch (cause) {
-    case GCCause::_metadata_GC_threshold:
-    case GCCause::_metadata_GC_clear_soft_refs:
-      // Receiving these causes means the VM itself entered the safepoint for metadata collection.
-
-      assert(SafepointSynchronize::is_at_safepoint(), "Expected at safepoint");
-      log_info(gc)("GC request for \"%s\" is handled", GCCause::to_string(cause));
-      MetaspaceGC::compute_new_size();
-      print_metaspace_info();
-      break;
-    default:
-      log_info(gc)("GC request for \"%s\" is ignored", GCCause::to_string(cause));
-  }
-  _monitoring_support->update_counters();
-}
-
-void SodaHeap::do_full_collection(bool clear_all_soft_refs) {
-  collect(gc_cause());
-}
-
 void SodaHeap::print_on(outputStream *st) const {
   st->print_cr("Soda Heap");
-
-  _virtual_space.print_on(st);
-
-  MetaspaceUtils::print_on(st);
-}
-
-bool SodaHeap::print_location(outputStream* st, void* addr) const {
-  return BlockLocationPrinter<SodaHeap>::print_location(st, addr);
-}
-
-void SodaHeap::print_tracing_info() const {
-  print_heap_info(used());
-  print_metaspace_info();
+  ParallelScavengeHeap::print_on(st);
 }
 
 void SodaHeap::print_heap_info(size_t used) const {
@@ -224,36 +155,19 @@ void SodaHeap::print_metaspace_info() const {
   }
 }
 
-size_t SodaHeap::used() const {
-  return block_size() *
-         (capacity_in_blocks() - SodaGlobalAllocator::num_free_blocks());
-}
-
 void SodaHeap::stop() {
   SodaGlobalAllocator::clear_lfs();
   SodaBlockArchive::clear();
 }
 
-bool SodaHeap::is_in(const void *p) const {
-  return is_in_reserved(p);
-}
-
 void SodaHeap::gc_threads_do(ThreadClosure *tc) const {
-  _par_workers->threads_do(tc);
-  _conc_workers->threads_do(tc);
+  ParallelScavengeHeap::gc_threads_do(tc);
+  // _conc_workers->threads_do(tc);
 }
 
-inline size_t SodaHeap::unsafe_max_tlab_alloc(Thread *ignore) const {
-  return SodaObjAllocator::unsafe_max_tlab_alloc();
-}
-
-inline size_t SodaHeap::tlab_used(Thread *ignore) const {
-  return SodaGlobalAllocator::active_blocks(SodaGenEnum::young_gen) *
-         _block_size;
-}
 
 void SodaHeap::ensure_parsability(bool retire_tlabs) {
-  CollectedHeap::ensure_parsability(retire_tlabs);
+  ParallelScavengeHeap::ensure_parsability(retire_tlabs);
 
   if (retire_tlabs) {
     for (JavaThreadIteratorWithHandle jtiwh; JavaThread *thread = jtiwh.next();) {

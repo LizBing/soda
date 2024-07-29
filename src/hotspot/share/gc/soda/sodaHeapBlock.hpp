@@ -27,7 +27,6 @@
 #include "gc/soda/sodaBumper.hpp"
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaFreeLineTable.hpp"
-#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/shared/gc_globals.hpp"
 #include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
@@ -60,8 +59,6 @@ public:
   }
 
   uintx index();
-
-  int gen() { return _gen; }
 
   bool should_be_evacuate() { return _should_be_evacuate; }
 
@@ -100,7 +97,6 @@ private:
 
   bool _free;
   bool _should_be_evacuate;
-  int _gen;
 
 private:
   SodaHeapBlockStack* _same_sized_group;

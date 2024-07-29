@@ -31,21 +31,18 @@
 #include "runtime/globals_extension.hpp"
 
 size_t SodaArguments::conservative_max_heap_alignment() {
-  return UseLargePages ? os::large_page_size() : os::vm_page_size();
+  return ParallelArguments::conservative_max_heap_alignment();
 }
 
 void SodaArguments::initialize() {
-  GCArguments::initialize();
+  FLAG_SET_DEFAULT(UseParallelGC, true);
+  ParallelArguments::initialize();
 
   assert(UseSodaGC, "Sanity");
 }
 
 void SodaArguments::initialize_alignments() {
-  size_t block_size = DEFAULT_CACHE_LINE_SIZE *
-                      SodaCacheLinesPerBlockLine *
-                      SodaLinesPerHeapBlock;
-  SpaceAlignment = block_size;
-  HeapAlignment  = SpaceAlignment;
+  ParallelArguments::initialize_alignments();
 }
 
 CollectedHeap* SodaArguments::create_heap() {

@@ -25,18 +25,18 @@
 #define SHARE_GC_SODA_SODABARRIERSET_HPP
 
 #include "gc/shared/barrierSet.hpp"
+#include "gc/shared/cardTableBarrierSet.inline.hpp"
 
-class SodaBarrierSet: public BarrierSet {
+class SodaBarrierSet: public CardTableBarrierSet {
   friend class VMStructs;
 
 public:
-  SodaBarrierSet();
+  SodaBarrierSet(CardTable*);
 
   static SodaBarrierSet* barrier_set() {
     return barrier_set_cast<SodaBarrierSet>(BarrierSet::barrier_set());
   }
 
-  virtual void print_on(outputStream *st) const {}
 
   virtual void on_thread_create(Thread* thread);
   virtual void on_thread_destroy(Thread* thread);

@@ -71,7 +71,9 @@ class PSHeapSummary;
 // |<- committed ->|        |<-          committed            ->|
 //
 class ParallelScavengeHeap : public CollectedHeap {
+  friend class SodaHeap;
   friend class VMStructs;
+
  private:
   static PSYoungGen* _young_gen;
   static PSOldGen*   _old_gen;

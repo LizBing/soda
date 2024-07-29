@@ -27,7 +27,6 @@
 #include "gc/soda/sodaHeap.hpp"
 #include "gc/soda/sodaAVL.hpp"
 #include "gc/soda/sodaBumper.hpp"
-#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaHeapBlock.inline.hpp"
 #include "gc/soda/sodaHeapBlockSet.hpp"
 #include "gc/shared/gc_globals.hpp"
@@ -128,24 +127,23 @@ class SodaGlobalAllocator : AllStatic {
 public:
   static uintx num_free_blocks() { return _num_free_blocks; }
 
-  static uintx active_blocks(int gen) { return _active_blocks[gen]; }
+  static uintx active_blocks() { return _active_blocks; }
 
 public:
   static void initialize();
 
-  static SodaHeapBlock* allocate(int num_blocks, int gen);
+  static SodaHeapBlock* allocate(int num_blocks);
   static void reclaim(SodaHeapBlock* hb);
 
-  static SodaHeapBlock* alloc_reusing(int gen) {
-    return _lfs[gen].pop();
+  static SodaHeapBlock* alloc_reusing() {
+    return _lfs.pop();
   }
-  static void reclaim_for_reusing(int gen, SodaHeapBlock* hb) {
-    _lfs[gen].push(*hb);
+  static void reclaim_for_reusing(SodaHeapBlock* hb) {
+    _lfs.push(*hb);
   }
 
   static void clear_lfs() {
-    for (int i = 0; i < SodaGenEnum::num_gens; ++i)
-      _lfs->pop_all();
+    _lfs.pop_all();
   }
 
 private:
@@ -153,11 +151,11 @@ private:
 
 private:
   static uintx _num_free_blocks;
-  static uintx _active_blocks[SodaGenEnum::num_gens];
+  static uintx _active_blocks;
 
   static AVL _avl;
   static SodaHeapBlockStack _stack;   // for one-free-block allocation
-  static SodaHeapBlockLFStack _lfs[SodaGenEnum::num_gens];
+  static SodaHeapBlockLFStack _lfs;
 };
 
 #endif // SHARE_GC_SODA_SODAGLOBALALLOCATOR_HPP

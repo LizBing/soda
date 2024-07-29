@@ -31,12 +31,11 @@
 #define VM_STRUCTS_SODAGC(nonstatic_field,                       \
                             volatile_nonstatic_field,               \
                             static_field)                           \
-  nonstatic_field(SodaHeap, _virtual_space, VirtualSpace)        \
 
 #define VM_TYPES_SODAGC(declare_type,                            \
                           declare_toplevel_type,                    \
                           declare_integer_type)                     \
-  declare_type(SodaHeap, CollectedHeap)
+  declare_type(SodaHeap, ParallelScavengeHeap)
 
 #define VM_INT_CONSTANTS_SODAGC(declare_constant,                \
                                   declare_constant_with_value)

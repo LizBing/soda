@@ -21,7 +21,6 @@
  *
  */
 
-#include "gc/soda/sodaGenEnum.hpp"
 #include "gc/soda/sodaHeapBlockSet.hpp"
 #include "precompiled.hpp"
 
@@ -60,7 +59,7 @@ intptr_t SodaRecyclingAllocator::alloc_slow(size_t s) {
     retire();
   }
 
-  _hb = SodaGlobalAllocator::alloc_reusing(SodaGenEnum::young_gen);
+  _hb = SodaGlobalAllocator::alloc_reusing();
   if (_hb == nullptr) return 0;
 
   _discoverer.initialize(_hb->start());

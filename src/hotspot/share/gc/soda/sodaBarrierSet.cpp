@@ -34,13 +34,8 @@
 #include "gc/soda/c2/sodaBarrierSetC2.hpp"
 #endif
 
-SodaBarrierSet::SodaBarrierSet() : BarrierSet(
-          make_barrier_set_assembler<BarrierSetAssembler>(),
-          make_barrier_set_c1<BarrierSetC1>(),
-          make_barrier_set_c2<BarrierSetC2>(),
-          nullptr /* barrier_set_nmethod */,
-          nullptr /* barrier_set_stack_chunk */,
-          BarrierSet::FakeRtti(BarrierSet::SodaBarrierSet)) {}
+SodaBarrierSet::SodaBarrierSet(CardTable* ct):
+  CardTableBarrierSet(ct) {}
 
 void SodaBarrierSet::on_thread_create(Thread *thread) {
   SodaThreadLocalData::create(thread);

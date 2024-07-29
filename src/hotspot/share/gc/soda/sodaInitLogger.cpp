@@ -31,7 +31,11 @@
 #include "utilities/globalDefinitions.hpp"
 
 void SodaInitLogger::print_gc_specific() {
+  ParallelInitLogger::print_gc_specific();
+
   auto heap = SodaHeap::heap();
+
+  log_info(gc)("Soda uses immix-constructed heap.");
 
   log_info(gc)(
     "Heap block size: " SIZE_FORMAT " bytes, "
@@ -39,8 +43,6 @@ void SodaInitLogger::print_gc_specific() {
     heap->block_size(),
     heap->line_size()
   );
-
-  log_info(gc)("Soda uses immix-constructed heap.");
 }
 
 void SodaInitLogger::print() {
