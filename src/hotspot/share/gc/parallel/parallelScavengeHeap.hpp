@@ -147,9 +147,7 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   static PSGCAdaptivePolicyCounters* gc_policy_counters() { return _gc_policy_counters; }
 
-  static ParallelScavengeHeap* heap() {
-    return named_heap<ParallelScavengeHeap>(CollectedHeap::Parallel);
-  }
+  static ParallelScavengeHeap* heap();
 
   CardTableBarrierSet* barrier_set();
   PSCardTable* card_table();
@@ -229,8 +227,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   void object_iterate_parallel(ObjectClosure* cl, HeapBlockClaimer* claimer);
   ParallelObjectIteratorImpl* parallel_object_iterator(uint thread_num) override;
 
-  HeapWord* block_start(const void* addr) const;
-  bool block_is_obj(const HeapWord* addr) const;
+  virtual HeapWord* block_start(const void* addr) const;
+  virtual bool block_is_obj(const HeapWord* addr) const;
 
   void prepare_for_verify() override;
   PSHeapSummary create_ps_heap_summary();

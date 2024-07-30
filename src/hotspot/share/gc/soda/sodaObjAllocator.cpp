@@ -96,6 +96,8 @@ size_t SodaObjAllocator::unsafe_max_tlab_alloc() {
 
 void SodaObjAllocator::retire_blocks() {
   for (int i = 0; i < os::processor_count(); ++i) {
-    SodaBlockArchive::record_normal(_shared_blocks[i]);
+    auto hb = _shared_blocks[i];
+    if (hb != nullptr)
+      SodaBlockArchive::record_normal(hb);
   }
 }

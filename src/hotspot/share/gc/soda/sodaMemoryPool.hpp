@@ -29,6 +29,7 @@
 #include "services/memoryUsage.hpp"
 #include "utilities/macros.hpp"
 
+// prepare to use for Immix heap memory pool
 class SodaMemoryPool : public CollectedMemoryPool {
 private:
   SodaHeap* _heap;

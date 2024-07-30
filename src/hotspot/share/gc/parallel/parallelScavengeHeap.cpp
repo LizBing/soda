@@ -42,6 +42,7 @@
 #include "gc/shared/locationPrinter.inline.hpp"
 #include "gc/shared/scavengableNMethods.hpp"
 #include "gc/shared/suspendibleThreadSet.hpp"
+#include "gc/soda/sodaHeap.hpp"
 #include "logging/log.hpp"
 #include "memory/iterator.hpp"
 #include "memory/metaspaceCounters.hpp"
@@ -160,6 +161,12 @@ void ParallelScavengeHeap::initialize_serviceability() {
   _young_manager->add_pool(_eden_pool);
   _young_manager->add_pool(_survivor_pool);
 
+}
+
+ParallelScavengeHeap* ParallelScavengeHeap::heap() {
+  return UseSodaGC ?
+         SodaHeap::heap() :
+         named_heap<ParallelScavengeHeap>(CollectedHeap::Parallel);
 }
 
 void ParallelScavengeHeap::safepoint_synchronize_begin() {

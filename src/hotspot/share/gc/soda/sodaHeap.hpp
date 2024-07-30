@@ -73,12 +73,8 @@ public:
   }
 
   // No support for block parsing.
-  HeapWord* block_start(const void* addr) const { return nullptr; }
-  bool block_is_obj(const HeapWord* addr) const { return false; }
-
-  // No heap verification
-  void prepare_for_verify() override {}
-  void verify(VerifyOption option) override {}
+  HeapWord* block_start(const void* addr) const override { return nullptr; }
+  bool block_is_obj(const HeapWord* addr) const override { return false; }
 
   WorkerThreads* safepoint_workers() override { return &_workers; }
 
