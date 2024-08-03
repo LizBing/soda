@@ -28,24 +28,20 @@
 #include "gc/soda/sodaHeapBlockSet.hpp"
 
 inline SodaHeapBlock* SodaHeapBlock::cont_next() {
-  auto idx = index() + _blocks;
+  uintx idx = index() + _blocks;
   return idx == SodaHeapBlocks::size() ?
                 nullptr :
                 SodaHeapBlocks::at(idx);
 }
 
 inline SodaHeapBlock* SodaHeapBlock::cont_prev() {
-  auto idx = index();
+  uintx idx = index();
   return idx == 0 ? nullptr : SodaHeapBlocks::at(idx - 1)->_header;
 }
 
-inline SodaHeapBlock* SodaHeapBlock::last() {
-  return SodaHeapBlocks::at(index() + _blocks - 1);
-}
-
 inline uintx SodaHeapBlock::index() {
-  return ((intptr_t)this - (intptr_t)SodaHeapBlocks::_blocks) /
-         sizeof(SodaHeapBlock);
+  return pointer_delta(this,
+                       SodaHeapBlocks::_blocks, sizeof(SodaHeapBlock));
 }
 
 #endif // SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP

@@ -40,6 +40,17 @@ class SodaHeapBlock {
   friend class SodaHeapBlockStack;
   friend class SodaObjAllocator;
 
+public:
+  struct Type {
+    enum Tag {
+      Free,
+      Normal,
+      HumonguousStart,
+      HumonguousCont,
+      EndTag
+    };
+  };
+
 private:
   SodaHeapBlock();
 
@@ -48,62 +59,71 @@ public:
     return &n._next;
   }
 
-  void claim_occupied() { _free = false; }
-  bool is_free() { return _header->_free; }
+  Type::Tag tag() { return _tag; }
+  bool well_tagged() { return _tag < Type::EndTag; }
+
+public:
+  void set_humonguous() {
+    for (uint i = 1; i < _blocks; ++i) {
+      this[i]._tag = Type::HumonguousCont;
+    }
+    _tag = Type::HumonguousStart;
+  }
+
+  void set_free() {
+    for (uint i = 0; i < _blocks; ++i)
+      this[i]._tag = Type::Free;
+  }
+
+  void set_normal() {
+    _tag = Type::Normal;
+  }
 
   intptr_t start() { return _start; }
   int blocks() { return _blocks; }
+  void set_blocks(uint n) {
+    _blocks = n;
+    _header = this;
+    last()->_header = this;
+  }
+  // in bytes
+  size_t size() {
+    return SodaHeap::heap()->block_size() * _blocks;
+  }
+
   MemRegion mr() {
-    return MemRegion((HeapWord*)_start,
-                     SodaHeap::heap()->block_size() / HeapWordSize);
+    return MemRegion((HeapWord*)_start, size() / HeapWordSize);
   }
 
   uintx index();
 
+  void evaluate_fragmentation();
   bool should_be_evacuate() { return _should_be_evacuate; }
 
-  void set_same_sized_group(SodaHeapBlockStack* n) { _same_sized_group = n; }
-
-  SodaHeapBlock* prev() { return _prev; }
   SodaHeapBlock* next() { return _next; }
-  void set_prev(SodaHeapBlock* n) { _prev = n; }
   void set_next(SodaHeapBlock* n) { _next = n; }
 
   SodaHeapBlock* cont_prev();
   SodaHeapBlock* cont_next();
 
-  void reset() {
-    _should_be_evacuate = false;
-  }
-
-  void fill_bumper() {
-    _bumper.fill(_start, _start + SodaHeap::heap()->block_size());
-  }
+  void fill_bumper() { _bumper.fill(mr()); }
 
 public:
   intptr_t alloc(size_t s) { return _bumper.bump(s); }
   intptr_t par_alloc(size_t s) { return _bumper.par_bump(s); }
 
 private:
-  SodaHeapBlock* partition(int n);
-  // @cn: contiguously next block
-  void merge(SodaHeapBlock* cn);
-
-  SodaHeapBlock* last();
+  SodaHeapBlock* last() { return this + (_blocks - 1); }
 
 private:
-  intptr_t _start;
+  const intptr_t _start;
   size_t _blocks;
 
-  bool _free;
+  volatile Type::Tag _tag;
   bool _should_be_evacuate;
 
 private:
-  SodaHeapBlockStack* _same_sized_group;
-
-  SodaHeapBlock* _prev;
   SodaHeapBlock* _next;
-
   SodaHeapBlock* _header;
 
 private:

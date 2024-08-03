@@ -24,18 +24,26 @@
 #include "precompiled.hpp"
 
 #include "gc/soda/sodaGlobalAllocator.hpp"
+#include "gc/soda/sodaMutableSpace.hpp"
 #include "runtime/mutexLocker.hpp"
 
 uintx SodaGlobalAllocator::_num_free_blocks;
 SodaGlobalAllocator::AVL SodaGlobalAllocator::_avl;
 SodaHeapBlockStack SodaGlobalAllocator::_stack;
 SodaHeapBlockLFStack SodaGlobalAllocator::_lfs;
-uintx SodaGlobalAllocator::_active_blocks;
+uintx SodaGlobalAllocator::_active_blocks = 0;
 
-void SodaGlobalAllocator::initialize() {
-  _num_free_blocks = SodaHeap::heap()->capacity_in_blocks();
+void SodaGlobalAllocator::initialize(size_t num_free_blocks,
+                                     size_t num_active_blocks) {
+  if (_active_blocks != 0)
+    clear_all();
 
-  auto hb = SodaHeapBlocks::at(0);
+  _num_free_blocks = num_free_blocks;
+
+  auto hb = SodaHeapBlocks::at(
+    SodaMutableSpace::immix_space()->max_capacity_in_blocks() -
+    num_free_blocks
+  );
   hb->_blocks = _num_free_blocks;
 
   hb->_header = hb;
@@ -134,4 +142,18 @@ void SodaGlobalAllocator::_reclaim(SodaHeapBlock* hb) {
   }
 
   ssg->push(hb);
+}
+
+void SodaGlobalAllocator::clear_all() {
+  clear_lfs();
+
+  struct ClearClosure : AVL::Closure {
+    void do_node(AVL::Node* n) override {
+      n->get_value()->clear();
+    }
+  } cl;
+
+  _avl.iterate_inorder(&cl);
+
+  _stack.clear();
 }

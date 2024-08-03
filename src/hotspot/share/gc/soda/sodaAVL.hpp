@@ -417,6 +417,24 @@ public:
     if (_root != nullptr) { _root->iterate_postorder(cl); }
   }
 
+  // before deletion, iterate all entries in post-order and do cl to them
+  void clear(Closure* cl) {
+    if (_root == nullptr) return;
+    _cache = nullptr;
+
+    struct DelClosure : public Closure {
+      void do_node(Node* n) override {
+        cl->do_node(n);
+        delete n;
+      }
+    } _cl;
+
+    iterate_postorder(&_cl);
+
+    _root = nullptr;
+    _size = 0;
+  }
+
 private:
   bool check_cache(Key k) {
     if (_cache == nullptr) { return false; }

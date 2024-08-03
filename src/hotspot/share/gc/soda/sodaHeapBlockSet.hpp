@@ -26,6 +26,7 @@
 
 #include "gc/soda/sodaFreeLineTable.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
+#include "gc/soda/sodaMutableSpace.hpp"
 #include "memory/allStatic.hpp"
 #include "memory/allocation.hpp"
 #include "utilities/lockFreeStack.hpp"
@@ -34,6 +35,7 @@ class SodaHeapBlocks : AllStatic {
   friend class SodaHeapBlock;
 
 public:
+  // should be done before SodaGlobalAllocator::initialize()
   static void initialize() {
     _blocks = NEW_C_HEAP_ARRAY(SodaHeapBlock, size(), mtGC);
     new(_blocks) SodaHeapBlock[size()]();
@@ -41,7 +43,7 @@ public:
 
 public:
   static size_t size() {
-    return SodaHeap::heap()->capacity_in_blocks();
+    return SodaMutableSpace::immix_space()->max_capacity_in_blocks();
   }
 
   static SodaHeapBlock* at(uintx idx) {
@@ -51,8 +53,9 @@ public:
 
   static SodaHeapBlock* block_for(intptr_t p) {
     auto heap = SodaHeap::heap();
+    auto space = SodaMutableSpace::immix_space();
 
-    return at((align_down(p, heap->block_size()) - heap->heap_start()) /
+    return at((align_down(p, heap->block_size()) - (intptr_t)space->bottom()) /
               heap->block_size());
   }
 

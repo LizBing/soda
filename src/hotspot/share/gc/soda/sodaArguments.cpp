@@ -41,10 +41,6 @@ void SodaArguments::initialize() {
   assert(UseSodaGC, "Sanity");
 }
 
-void SodaArguments::initialize_alignments() {
-  ParallelArguments::initialize_alignments();
-}
-
 CollectedHeap* SodaArguments::create_heap() {
   return new SodaHeap();
 }

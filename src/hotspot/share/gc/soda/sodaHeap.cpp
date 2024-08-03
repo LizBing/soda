@@ -53,18 +53,18 @@ SodaHeap::SodaHeap() {
 }
 
 jint SodaHeap::initialize() {
-  ParallelScavengeHeap::initialize();
-
   _line_size = DEFAULT_CACHE_LINE_SIZE * SodaCacheLinesPerBlockLine;
   _block_size = _line_size * SodaLinesPerHeapBlock;
-  _capacity_in_blocks = align_down(MaxOldSize, _block_size) / _block_size;
-  _heap_start = (intptr_t)_reserved.start();
+
+  MinOldSize = align_down(MinOldSize, _block_size);
+  MaxOldSize = align_down(MaxOldSize, _block_size);
+
+  assert(MinOldSize != 0 && MaxOldSize != 0, "small heap");
+
+  ParallelScavengeHeap::initialize();
 
   // Initialize facilities
   SodaObjAllocator::initialize();
-  SodaFreeLineTable::initialize();
-  SodaHeapBlocks::initialize();
-  SodaGlobalAllocator::initialize();
 
   _conc_workers = new WorkerThreads("Soda Concurrent Worker", ConcGCThreads);
 

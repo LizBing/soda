@@ -32,6 +32,7 @@
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/gcLocker.hpp"
 #include "gc/shared/spaceDecorator.inline.hpp"
+#include "gc/soda/sodaMutableSpace.hpp"
 #include "logging/log.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
@@ -101,7 +102,9 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
   // ObjectSpace stuff
   //
 
-  _object_space = new MutableSpace(virtual_space()->alignment());
+  _object_space = UseSodaGC ?
+                  new MutableSpace(virtual_space()->alignment()) :
+                  new SodaMutableSpace(virtual_space()->alignment());
   object_space()->initialize(committed_mr,
                              SpaceDecorator::Clear,
                              SpaceDecorator::Mangle,

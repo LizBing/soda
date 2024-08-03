@@ -65,13 +65,6 @@ public:
     return align_down(min_humongous() / HeapWordSize, MinObjAlignment);
   }
 
-  void pin_object(JavaThread* thread, oop obj) override {
-    GCLocker::lock_critical(thread);
-  }
-  void unpin_object(JavaThread* thread, oop obj) override {
-    GCLocker::unlock_critical(thread);
-  }
-
   // No support for block parsing.
   HeapWord* block_start(const void* addr) const override { return nullptr; }
   bool block_is_obj(const HeapWord* addr) const override { return false; }
@@ -96,18 +89,13 @@ public:
 
 private:
   // hot field
-  size_t _capacity_in_blocks;
   size_t _line_size;
   size_t _block_size;
-  intptr_t _heap_start;
 
 public:
   size_t line_size() const { return _line_size; }
   size_t block_size() const { return _block_size; }
 
-  intptr_t heap_start() { return _heap_start; }
-  size_t capacity_in_lines() const { return SodaLinesPerHeapBlock * _capacity_in_blocks; }
-  size_t capacity_in_blocks() const { return _capacity_in_blocks; }
   size_t min_humongous() const { return block_size() >> 1; }
 
   WorkerThreads* par_workers() { return &_workers; }
