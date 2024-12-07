@@ -26,7 +26,7 @@
 #include "code/codeCache.hpp"
 #include "gc/parallel/parallelArguments.hpp"
 #include "gc/parallel/objectStartArray.inline.hpp"
-#include "gc/parallel/parallelInitLogger.hpp"
+// #include "gc/parallel/parallelInitLogger.hpp"
 #include "gc/parallel/parallelScavengeHeap.inline.hpp"
 #include "gc/parallel/psAdaptiveSizePolicy.hpp"
 #include "gc/parallel/psMemoryPool.hpp"
@@ -55,6 +55,8 @@
 #include "services/memTracker.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/vmError.hpp"
+
+#include "gc/soda/sodaHeap.hpp"
 
 PSYoungGen*  ParallelScavengeHeap::_young_gen = nullptr;
 PSOldGen*    ParallelScavengeHeap::_old_gen = nullptr;
@@ -127,9 +129,7 @@ jint ParallelScavengeHeap::initialize() {
     return JNI_ENOMEM;
   }
 
-  ParallelInitLogger::print();
-
-  return JNI_OK;
+  return SodaHeap::initialize();
 }
 
 void ParallelScavengeHeap::initialize_serviceability() {

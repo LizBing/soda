@@ -117,7 +117,7 @@
           "Use the Garbage-First garbage collector")                        \
                                                                             \
   product(bool, UseParallelGC, false,                                       \
-          "Use the Parallel garbage collector.")                            \
+          "Use the Parallel(Soda) garbage collector.")                      \
                                                                             \
   product(bool, UseEpsilonGC, false, EXPERIMENTAL,                          \
           "Use the Epsilon (no-op) garbage collector")                      \

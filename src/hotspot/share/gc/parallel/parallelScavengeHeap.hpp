@@ -72,6 +72,9 @@ class PSHeapSummary;
 //
 class ParallelScavengeHeap : public CollectedHeap {
   friend class VMStructs;
+
+  friend class SodaHeap;
+
  private:
   static PSYoungGen* _young_gen;
   static PSOldGen*   _old_gen;
@@ -130,7 +133,7 @@ class ParallelScavengeHeap : public CollectedHeap {
   }
 
   const char* name() const override {
-    return "Parallel";
+    return "Parallel(Soda)";
   }
 
   SoftRefPolicy* soft_ref_policy() override { return &_soft_ref_policy; }
