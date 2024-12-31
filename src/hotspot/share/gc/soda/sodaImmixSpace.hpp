@@ -21,33 +21,41 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_SODA_SODAHEAP_HPP
-#define SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#ifndef SHARE_GC_SODA_SODAIMMIXSPACE_HPP
+#define SHARE_GC_SODA_SODAIMMIXSPACE_HPP
 
-#include "gc/parallel/parallelScavengeHeap.inline.hpp"
+#include "gc/parallel/mutableSpace.hpp"
+#include "gc/soda/sodaGlobals.hpp"
+#include "gc/soda/sodaLineCardTable.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/memRegion.hpp"
 
-// Soda manages the old generation of Parallel.
-class SodaHeap: public CHeapObj<mtGC> {
+// Note that the committed size of the old generation does not
+// vary until a major gc or allocation with expansion occurs.
+
+class SodaImmixSpace: public MutableSpace {
 public:
-  static SodaHeap* heap() { return _heap; }
+  SodaImmixSpace(size_t page_size):
+    MutableSpace(page_size),
+    _constructed(false) {}
 
-  static jint initialize();
+  void initialize(MemRegion mr,
+                  bool clear_space,
+                  bool mangle_space,
+                  bool setup_pages = SetupPages,
+                  WorkerThreads *pretouch_workers = nullptr) override;
+
+public:
+  void reset_constructed() { _constructed = false; }
+  bool constructed() { return _constructed; }
+
+public:
+  void construct();
 
 private:
-  static SodaHeap* _heap;
-  static ParallelScavengeHeap* _psh;
+  bool _constructed;
 
-public:
-  MemRegion reserved() {
-    return _psh->old_gen()->reserved();
-  }
-
-  MemRegion committed() {
-    return _psh->old_gen()->committed();
-  }
+  SodaLineCardTable* _lct;
 };
 
 
-#endif // SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#endif // SHARE_GC_SODA_SODAIMMIXSPACE_HPP

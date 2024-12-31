@@ -37,6 +37,8 @@
 #include "utilities/defaultStream.hpp"
 #include "utilities/powerOfTwo.hpp"
 
+#include "gc/soda/sodaGlobals.hpp"
+
 size_t ParallelArguments::conservative_max_heap_alignment() {
   return compute_heap_alignment();
 }
@@ -93,7 +95,7 @@ void ParallelArguments::initialize() {
 
 // The alignment used for boundary between young gen and old gen
 static size_t default_gen_alignment() {
-  return 64 * K * HeapWordSize;
+  return SodaGlobals::block_size;
 }
 
 void ParallelArguments::initialize_alignments() {

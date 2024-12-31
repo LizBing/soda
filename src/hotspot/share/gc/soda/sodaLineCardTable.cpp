@@ -21,33 +21,13 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_SODA_SODAHEAP_HPP
-#define SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#include "precompiled.hpp"
 
-#include "gc/parallel/parallelScavengeHeap.inline.hpp"
+#include "gc/soda/sodaGlobals.hpp"
+#include "gc/soda/sodaLineCardTable.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/memRegion.hpp"
 
-// Soda manages the old generation of Parallel.
-class SodaHeap: public CHeapObj<mtGC> {
-public:
-  static SodaHeap* heap() { return _heap; }
-
-  static jint initialize();
-
-private:
-  static SodaHeap* _heap;
-  static ParallelScavengeHeap* _psh;
-
-public:
-  MemRegion reserved() {
-    return _psh->old_gen()->reserved();
-  }
-
-  MemRegion committed() {
-    return _psh->old_gen()->committed();
-  }
-};
-
-
-#endif // SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+void SodaLineCardTable::initialize() {
+  _card_size = compute_card_size(_heap_mr.byte_size());
+  _cards = NEW_C_HEAP_ARRAY(card_t, _card_size, mtGC);
+}

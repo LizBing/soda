@@ -37,6 +37,8 @@
 #include "runtime/java.hpp"
 #include "utilities/align.hpp"
 
+#include "gc/soda/sodaImmixSpace.hpp"
+
 PSOldGen::PSOldGen(ReservedSpace rs, size_t initial_size, size_t min_size,
                    size_t max_size, const char* perf_data_name, int level):
   _min_gen_size(min_size),
@@ -101,7 +103,7 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
   // ObjectSpace stuff
   //
 
-  _object_space = new MutableSpace(virtual_space()->alignment());
+  _object_space = new SodaImmixSpace(virtual_space()->alignment());
   object_space()->initialize(committed_mr,
                              SpaceDecorator::Clear,
                              SpaceDecorator::Mangle,

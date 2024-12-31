@@ -21,33 +21,22 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_SODA_SODAHEAP_HPP
-#define SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#ifndef SHARE_GC_SODA_SODAGLOBALS_HPP
+#define SHARE_GC_SODA_SODAGLOBALS_HPP
 
-#include "gc/parallel/parallelScavengeHeap.inline.hpp"
-#include "memory/allocation.inline.hpp"
-#include "memory/memRegion.hpp"
+#include "memory/allStatic.hpp"
+#include "utilities/globalDefinitions.hpp"
 
-// Soda manages the old generation of Parallel.
-class SodaHeap: public CHeapObj<mtGC> {
-public:
-  static SodaHeap* heap() { return _heap; }
+// All the sizes here are in bytes.
+struct SodaGlobals: AllStatic {
+  const static uint log_line_size = 8;
+  const static size_t line_size = 1ul << log_line_size;
 
-  static jint initialize();
+  const static uint log_block_size = 15;
+  const static size_t block_size = 1ul << log_block_size;
 
-private:
-  static SodaHeap* _heap;
-  static ParallelScavengeHeap* _psh;
-
-public:
-  MemRegion reserved() {
-    return _psh->old_gen()->reserved();
-  }
-
-  MemRegion committed() {
-    return _psh->old_gen()->committed();
-  }
+  const static uint lines_per_block = 1ul << (log_block_size - log_line_size);
 };
 
 
-#endif // SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#endif // SHARE_GC_SODA_SODAGLOBALS_HPP

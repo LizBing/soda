@@ -21,33 +21,26 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_SODA_SODAHEAP_HPP
-#define SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#include "precompiled.hpp"
 
-#include "gc/parallel/parallelScavengeHeap.inline.hpp"
-#include "memory/allocation.inline.hpp"
-#include "memory/memRegion.hpp"
+#include "gc/soda/sodaGlobals.hpp"
+#include "gc/soda/sodaImmixSpace.hpp"
 
-// Soda manages the old generation of Parallel.
-class SodaHeap: public CHeapObj<mtGC> {
-public:
-  static SodaHeap* heap() { return _heap; }
+void SodaImmixSpace::initialize(
+  MemRegion mr,
+  bool clear_space,
+  bool mangle_space,
+  bool setup_pages,
+  WorkerThreads *pretouch_workers)
+{
+  MutableSpace::initialize(mr, clear_space, mangle_space, setup_pages, pretouch_workers);
 
-  static jint initialize();
+  _lct = new SodaLineCardTable(mr);
+}
 
-private:
-  static SodaHeap* _heap;
-  static ParallelScavengeHeap* _psh;
+void SodaImmixSpace::construct() {
+  assert(!constructed(), "should not be constructed before reset");
+  _constructed = true;
 
-public:
-  MemRegion reserved() {
-    return _psh->old_gen()->reserved();
-  }
-
-  MemRegion committed() {
-    return _psh->old_gen()->committed();
-  }
-};
-
-
-#endif // SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+  // ...
+}

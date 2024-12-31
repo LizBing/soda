@@ -21,33 +21,10 @@
  *
  */
 
-#ifndef SHARE_GC_SHARED_SODA_SODAHEAP_HPP
-#define SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#ifndef SHARE_GC_SODA_SODAALLOCATOR_HPP
+#define SHARE_GC_SODA_SODAALLOCATOR_HPP
 
-#include "gc/parallel/parallelScavengeHeap.inline.hpp"
-#include "memory/allocation.inline.hpp"
-#include "memory/memRegion.hpp"
-
-// Soda manages the old generation of Parallel.
-class SodaHeap: public CHeapObj<mtGC> {
-public:
-  static SodaHeap* heap() { return _heap; }
-
-  static jint initialize();
-
-private:
-  static SodaHeap* _heap;
-  static ParallelScavengeHeap* _psh;
-
-public:
-  MemRegion reserved() {
-    return _psh->old_gen()->reserved();
-  }
-
-  MemRegion committed() {
-    return _psh->old_gen()->committed();
-  }
-};
+class SodaHBAllocator {};
 
 
-#endif // SHARE_GC_SHARED_SODA_SODAHEAP_HPP
+#endif // SHARE_GC_SODA_SODAALLOCATOR_HPP
