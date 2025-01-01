@@ -21,18 +21,5 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAALLOCATOR_HPP
-#define SHARE_GC_SODA_SODAALLOCATOR_HPP
+#include "precompiled.hpp"
 
-#include "memory/allStatic.hpp"
-
-class SodaHBAllocator {};
-
-class SodaObjAllocator: AllStatic {
-public:
-private:
-  
-};
-
-
-#endif // SHARE_GC_SODA_SODAALLOCATOR_HPP

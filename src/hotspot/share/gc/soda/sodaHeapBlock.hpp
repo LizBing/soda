@@ -38,7 +38,7 @@ public:
   SodaHBNode* node() { return _node; }
   void set_node(SodaHBNode* n) { _node = n; }
 
-  uintptr_t bump(size_t s) {
+  uintptr_t alloc(size_t s) {
     assert(is_aligned(s, HeapWordSize), "should be aligned");
     assert(vaild_top(), "block hasn't been initialized");
 
@@ -50,6 +50,15 @@ public:
 
     ensure_parsability();
     return false;
+  }
+
+  void undo_allocation(uintptr_t ptr, size_t s) {
+    assert(ptr != 0, "should not be null");
+
+    if (ptr == _top)
+      _top -= s;
+
+    assert(vaild_top(), "broken block");
   }
 
 private:

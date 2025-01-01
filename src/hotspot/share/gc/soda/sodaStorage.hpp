@@ -21,18 +21,25 @@
  *
  */
 
-#ifndef SHARE_GC_SODA_SODAALLOCATOR_HPP
-#define SHARE_GC_SODA_SODAALLOCATOR_HPP
+#ifndef SHARE_GC_SODA_SODASTORAGE_HPP
+#define SHARE_GC_SODA_SODASTORAGE_HPP
 
-#include "memory/allStatic.hpp"
+#include "memory/allocation.hpp"
+#include "runtime/os.inline.hpp"
 
-class SodaHBAllocator {};
+// The granule map of the number of cpu.
+template<class T>
+class SodaPerCPU: public CHeapObj<mtGC> {
+private:
+  static uint cpus();
 
-class SodaObjAllocator: AllStatic {
+public:
+  static uint cpu_id();
+
 public:
 private:
-  
+  T* _array;
 };
 
 
-#endif // SHARE_GC_SODA_SODAALLOCATOR_HPP
+#endif // SHARE_GC_SODA_SODASTORAGE_HPP
