@@ -65,9 +65,9 @@ struct SodaLListClosure: StackObj {
   virtual bool do_node(SodaFlexibleListNode*) = 0;
 };
 
-class SodaLinkedList: SodaFlexibleListNode {
-  using LFS = LockFreeStack<SodaFlexibleListNode, SodaFlexibleListNode::next_ptr>;
+using SodaLockFreeStack = LockFreeStack<SodaFlexibleListNode, SodaFlexibleListNode::next_ptr>;
 
+class SodaLinkedList: SodaFlexibleListNode {
 public:
   SodaLinkedList() { clear(); }
 
@@ -76,7 +76,7 @@ public:
   SodaFlexibleListNode* last()  { return _prev; }
 
   // After moving, this ll would be cleared.
-  void move_to_lfs(LFS* lfs) {
+  void move_to_lfs(SodaLockFreeStack* lfs) {
     auto f = first();
     auto l = last();
     l->_next = nullptr;

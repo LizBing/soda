@@ -24,14 +24,44 @@
 #ifndef SHARE_GC_SODA_SODAALLOCATOR_HPP
 #define SHARE_GC_SODA_SODAALLOCATOR_HPP
 
+#include "gc/soda/sodaContainerOf.hpp"
+#include "gc/soda/sodaFlexibleList.hpp"
+#include "gc/soda/sodaHeapBlock.hpp"
 #include "memory/allStatic.hpp"
+#include "utilities/globalDefinitions.hpp"
 
-class SodaHBAllocator {};
+class SodaHeapBlock;
+
+
+class SodaHBAllocator: AllStatic {
+public:
+  static SodaHeapBlock* alloc_reusable();
+  static SodaHeapBlock* allocate(size_t n);
+
+private:
+  static SodaHeapBlock* unwrap(SodaFlexibleListNode* n) {
+    if (n == nullptr) return nullptr;
+
+    auto sub_node = container_of(n, SodaHBNode, _node);
+    return container_of(sub_node, SodaHeapBlock, _manager_set);
+  }
+
+  static SodaHeapBlock* cache_path(size_t);
+
+  static void clear_cache() { _cache = nullptr; }
+
+private:
+  static SodaLockFreeStack _separateds;
+  static SodaLinkedList _freeList;
+  static SodaHBNode* _cache;
+
+  static SodaLockFreeStack _reusables;
+};
 
 class SodaObjAllocator: AllStatic {
 public:
-private:
-  
+  static uintptr_t allocate(size_t size);
+  static uintptr_t alloc_humongous(size_t size);
 };
 
 

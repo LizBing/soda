@@ -25,63 +25,87 @@
 #define SHARE_GC_SODA_SODAHEAPBLOCK_HPP
 
 #include "gc/shared/collectedHeap.hpp"
+#include "gc/soda/sodaGlobals.hpp"
+#include "gc/soda/sodaFlexibleList.hpp"
 #include "memory/allocation.hpp"
 #include "memory/allStatic.hpp"
 #include "utilities/align.hpp"
 
-class SodaHBNode;
+class SodaHeapBlock;
 
-class SodaHeapBlock: public CHeapObj<mtGC> {
+class SodaHBTable: AllStatic {
+  friend class SodaHeapBlock;
+
 public:
-  bool is_reused() { return _is_reused; }
+  static void initialize(uintptr_t heap_base, size_t heap_size);
 
-  SodaHBNode* node() { return _node; }
-  void set_node(SodaHBNode* n) { _node = n; }
+  static uintx ptr_to_index(uintptr_t);
+  static SodaHeapBlock* ptr_to_block(uintptr_t ptr);
+  static SodaHeapBlock* get(uintx index);
 
-  uintptr_t alloc(size_t s) {
-    assert(is_aligned(s, HeapWordSize), "should be aligned");
-    assert(vaild_top(), "block hasn't been initialized");
+private:
+  static size_t calc_capacity(size_t heap_size) {
+    assert(is_aligned(heap_size, SodaGlobals::block_size), "should be aligned.");
 
-    if (ok_to_allocate(s)) {
-      uintptr_t tmp = _top;
-      _top += s;
-      return tmp;
-    }
-
-    ensure_parsability();
-    return false;
-  }
-
-  void undo_allocation(uintptr_t ptr, size_t s) {
-    assert(ptr != 0, "should not be null");
-
-    if (ptr == _top)
-      _top -= s;
-
-    assert(vaild_top(), "broken block");
+    return heap_size >> SodaGlobals::log_block_size;
   }
 
 private:
-  bool vaild_top() { return _top >= _start && _top < _end; }
-  bool ok_to_allocate(size_t s) {
-    return _top + s == _end ||
-           _top + s + CollectedHeap::min_dummy_object_size() < _end;
-  }
+  static uintptr_t _heap_base;
+  static size_t _blocks;
+  static SodaHeapBlock* _array;
+};
 
+class SodaHBNode: StackObj {
+  friend class FirstFitClosure;
+  friend class SodaHBAllocator;
+
+public:
+  size_t blocks() { return _blocks; }
+  void set_blocks(size_t n) { _blocks = n; }
+
+  SodaHBNode* header() { return _node_header; }
+  void set_header(SodaHBNode* n) { _node_header = n; }
+
+  bool is_free() { return _node_header != nullptr; }
+
+public:
+  SodaHBNode* partition(size_t n);
+
+private:
+  SodaFlexibleListNode _node;
+
+private:
+  SodaHBNode* _node_header;
+  size_t _blocks;
+};
+
+class SodaHeapBlock: public CHeapObj<mtGC> {
+  friend class SodaHBAllocator;
+
+public:
+  uintx index() { return this - SodaHBTable::_array; }
+
+public:
+  bool is_reused() { return _is_reused; }
+
+  uintptr_t alloc(size_t s);
+  void undo_allocation(uintptr_t ptr, size_t s);
+
+private:
   void ensure_parsability() {
     Universe::heap()->fill_with_dummy_object((HeapWord*)_top, (HeapWord*)_end, false);
   }
 
 private:
   bool _is_reused;
-  SodaHBNode* _node;
+  SodaHBNode _manager_set;
 
   volatile uintptr_t _top;
   uintptr_t _start;
   uintptr_t _end;
 };
 
-class SodaHBTable: AllStatic {};
 
 
 #endif // SHARE_GC_SODA_SODAHEAPBLOCK_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Lei Zaakjyu. All rights reserved.
+ * Copyright (c) 2025, Lei Zaakjyu. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,12 @@
  *
  */
 
-#include "precompiled.hpp"
+#ifndef SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
+#define SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
 
-#include "gc/soda/sodaStorage.hpp"
-#include "runtime/os.hpp"
+#include "gc/soda/sodaHeapBlock.hpp"
+
+
+
+
+#endif // SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP

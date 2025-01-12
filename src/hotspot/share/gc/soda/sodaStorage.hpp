@@ -25,20 +25,49 @@
 #define SHARE_GC_SODA_SODASTORAGE_HPP
 
 #include "memory/allocation.hpp"
-#include "runtime/os.inline.hpp"
+#include "runtime/os.hpp"
+
+template<class T>
+class SodaStorage: StackObj {
+public:
+  void initialize() {
+    _array = NEW_C_HEAP_ARRAY(T, size(), mtGC);
+    memset(_array, 0, size() * sizeof(T));
+  }
+
+public:
+  virtual size_t size() = 0;
+
+  volatile T* get(uint idx) {
+    assert(idx < size(), "out of capacity");
+
+    return _array + idx;
+  }
+
+private:
+  volatile T* _array;
+};
 
 // The granule map of the number of cpu.
 template<class T>
-class SodaPerCPU: public CHeapObj<mtGC> {
+class SodaPerCPU: public SodaStorage<T> {
 private:
-  static uint cpus();
+  static uint cpus() { return os::processor_count(); }
+  static uint cpu_id() { return os::processor_id(); }
 
 public:
-  static uint cpu_id();
+  size_t size() { return cpus(); }
 
+  volatile T* get() { return get(cpu_id()); }
+};
+
+template<class T>
+class SodaPerWorker: public SodaStorage<T> {
 public:
+  SodaPerWorker(size_t workers): _workers(workers) {}
+
 private:
-  T* _array;
+  size_t _workers;
 };
 
 
