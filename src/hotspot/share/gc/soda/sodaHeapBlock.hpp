@@ -32,6 +32,7 @@
 #include "utilities/align.hpp"
 
 class SodaHeapBlock;
+class SodaHBABuffer;
 
 class SodaHBTable: AllStatic {
   friend class SodaHeapBlock;
@@ -61,30 +62,46 @@ class SodaHBNode: StackObj {
   friend class SodaHBAllocator;
 
 public:
+  SodaHeapBlock* unwrap();
+  uintx index();  // forwarding
+
   size_t blocks() { return _blocks; }
-  void set_blocks(size_t n) { _blocks = n; }
-
   SodaHBNode* header() { return _node_header; }
-  void set_header(SodaHBNode* n) { _node_header = n; }
+  SodaHBNode* tail();
 
-  bool is_free() { return _node_header != nullptr; }
+  bool is_free();
+  void set_free() { _free_tag = true; }
+  void set_occupied() { _free_tag = false; }
 
 public:
   SodaHBNode* partition(size_t n);
+  void set_up(size_t blocks);
+  bool merge();   // attempt to merge with the next following block
+
+private:
+  uintx calc_partition_res_index(size_t n) {
+    assert(n > 0 && n < blocks(), "fail to partition");
+    return index() + blocks() - n;
+  }
 
 private:
   SodaFlexibleListNode _node;
 
 private:
+  bool _free_tag;
+
   SodaHBNode* _node_header;
   size_t _blocks;
 };
 
 class SodaHeapBlock: public CHeapObj<mtGC> {
+  // friend class SodaHBABuffer;
   friend class SodaHBAllocator;
+  friend class SodaHBNode;
 
 public:
   uintx index() { return this - SodaHBTable::_array; }
+  SodaHBNode* node() { return &_node; }
 
 public:
   bool is_reused() { return _is_reused; }
@@ -99,7 +116,7 @@ private:
 
 private:
   bool _is_reused;
-  SodaHBNode _manager_set;
+  SodaHBNode _node;
 
   volatile uintptr_t _top;
   uintptr_t _start;

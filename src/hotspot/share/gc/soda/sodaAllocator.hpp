@@ -32,6 +32,19 @@
 
 class SodaHeapBlock;
 
+class SodaHBABuffer: AllStatic {
+  friend class SodaHBAllocator;
+
+  const static size_t MAX_BUFFER_SIZE_IN_BLOCKS = 16;
+
+public:
+  // only for single block allocation
+  static SodaHeapBlock* allocate();
+
+private:
+  static SodaHeapBlock* volatile _bumper;
+  static SodaHeapBlock* _end;
+};
 
 class SodaHBAllocator: AllStatic {
 public:
@@ -43,17 +56,15 @@ private:
     if (n == nullptr) return nullptr;
 
     auto sub_node = container_of(n, SodaHBNode, _node);
-    return container_of(sub_node, SodaHeapBlock, _manager_set);
+    return sub_node->unwrap();
   }
 
-  static SodaHeapBlock* cache_path(size_t);
-
-  static void clear_cache() { _cache = nullptr; }
+private:
+  SodaHeapBlock* slow_path(size_t n);
 
 private:
   static SodaLockFreeStack _separateds;
   static SodaLinkedList _freeList;
-  static SodaHBNode* _cache;
 
   static SodaLockFreeStack _reusables;
 };

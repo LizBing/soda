@@ -21,8 +21,14 @@
  *
  */
 
+#include "gc/soda/sodaContainerOf.hpp"
 #include "precompiled.hpp"
 
 #include "gc/soda/sodaHeapBlock.hpp"
 
+SodaHBNode* SodaHBNode::partition(size_t n) {
+  auto res = SodaHBTable::get(calc_partition_res_index(n));
 
+  res->_node.set_up(n);
+  set_up(blocks() - n);
+}

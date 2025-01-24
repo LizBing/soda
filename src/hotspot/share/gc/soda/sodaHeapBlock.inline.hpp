@@ -24,9 +24,25 @@
 #ifndef SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
 #define SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP
 
+#include "gc/soda/sodaContainerOf.hpp"
 #include "gc/soda/sodaHeapBlock.hpp"
 
+inline SodaHeapBlock* SodaHBNode::unwrap() {
+  return container_of(this, SodaHeapBlock, _node);
+}
 
+inline uintx SodaHBNode::index() {
+  return unwrap()->index();
+}
+
+inline SodaHBNode* SodaHBNode::tail() {
+  return &SodaHBTable::get(index() + blocks() - 1)->_node;
+}
+
+inline void SodaHBNode::set_up(size_t blocks) {
+  _blocks = blocks;
+  tail()->_node_header = this;
+}
 
 
 #endif // SHARE_GC_SODA_SODAHEAPBLOCK_INLINE_HPP

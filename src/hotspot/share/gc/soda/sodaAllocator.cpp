@@ -22,45 +22,46 @@
  */
 
 #include "gc/soda/sodaFlexibleList.hpp"
+#include "gc/soda/sodaHeapBlock.hpp"
 #include "precompiled.hpp"
 
 #include "gc/soda/sodaAllocator.hpp"
 #include "gc/soda/sodaContainerOf.hpp"
-#include "gc/soda/sodaHeapBlock.hpp"
+#include "gc/soda/sodaHeapBlock.inline.hpp"
 #include "memory/allocation.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
+
+SodaHeapBlock* volatile SodaHBABuffer::_bumper = nullptr;
+SodaHeapBlock* SodaHBABuffer::_end = nullptr;
+
+SodaHeapBlock* SodaHBABuffer::allocate() {
+  SodaHeapBlock* res = nullptr;
+  SodaHeapBlock* new_top = nullptr;
+
+  do {
+    res = Atomic::load(&_bumper);
+    if (res == nullptr)
+      return nullptr;
+
+    new_top = SodaHBTable::get(res->index() + 1);
+    if (new_top == _end)
+      return nullptr;
+  } while(Atomic::cmpxchg(&_bumper, res, new_top) != res);
+
+  // no need to set up the block
+  // just make it occupied
+  res->node()->set_occupied();
+
+  return res;
+}
 
 SodaLinkedList SodaHBAllocator::_freeList;
 SodaLockFreeStack SodaHBAllocator::_separateds;
 SodaLockFreeStack SodaHBAllocator::_reusables;
-SodaHBNode* SodaHBAllocator::_cache = nullptr;
 
 SodaHeapBlock* SodaHBAllocator::alloc_reusable() {
   return unwrap(_reusables.pop());
-}
-
-SodaHeapBlock* SodaHBAllocator::cache_path(size_t n) {
-  assert(Heap_lock->is_locked(), "should be protected by Heap Lock.");
-
-  SodaHeapBlock* res = nullptr;
-
-  if (_cache != nullptr && _cache->blocks() >= n) {
-    if (_cache->blocks() == n) {
-      _cache->_node.erase();
-      res = container_of(_cache, SodaHeapBlock, _manager_set);
-      clear_cache();
-    } else {
-      res = container_of(_cache->partition(n), SodaHeapBlock, _manager_set);
-
-      if (_cache->blocks() == 1) {
-        _cache->_node.erase();
-        _separateds.push(_cache->_node);
-        clear_cache();
-      }
-    }
-  }
-
-  return res;
 }
 
 class FirstFitClosure: public SodaLListClosure {
@@ -88,18 +89,44 @@ private:
   SodaHBNode* _res;
 };
 
+SodaHeapBlock* SodaHBAllocator::slow_path(size_t n) {
+  MutexLocker ml(Heap_lock);
+
+  FirstFitClosure cl(n);
+  _freeList.iterate(&cl);
+
+  SodaHBNode* res = nullptr;
+  auto node = cl.result();
+  // out of memory
+  if (node == nullptr) return nullptr;
+  assert(node->blocks() >= n, "bad code");
+
+  if (node->blocks() == n) {
+    node->_node.erase();
+    res = node;
+  } else {
+    res = node->partition(n);
+    if (node->blocks() == 1) {
+      node->_node.erase();
+      _separateds.push(node->_node);
+    }
+  }
+
+  res->set_occupied();
+}
+
 SodaHeapBlock* SodaHBAllocator::allocate(size_t n) {
   SodaHeapBlock* res = nullptr;
 
   if (n == 1) {
     res = unwrap(_separateds.pop());
+    if (res == nullptr)
+      res = SodaHBABuffer::allocate();
+
     if (res != nullptr) return res;
   }
 
   MutexLocker ml(Heap_lock);
-
-  res = cache_path(n);
-  if (res != nullptr) return res;
 
   FirstFitClosure cl(n);
   _freeList.iterate(&cl);
